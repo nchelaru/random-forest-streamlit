@@ -57,24 +57,25 @@ if page == pages[0]:
      engineering, it is a great option as the first model to fit onto a new dataset to explore how much "learnable" signal can found before attempting
       more sophisticated methods.
       
-    As an ensemble method, the random forest model builds multiple decision trees and aggregate their results to create a more accurate 
+      As an ensemble method, the random forest model builds multiple decision trees and aggregate their results to create a more accurate 
     prediction than any of the individual models is capable of. Two features of the random forest model help to reduce the correlation between 
      the decision trees that hinders performance of conventional bagged decision tree models:
-    
+    '''
+
+    st.success(''' 
     1. Each decision tree trains on a different bootstrap sample (*subset*) of the total dataset 
     2. At each split point, the decision tree can search through only a *random sample* of all available features
     
-    '''
+    ''')
 
     st.image('./random_forest.png', use_column_width=True, caption="Image credit: https://www.youtube.com/watch?v=-bYrLRMT3vY")
 
     '''
     
     Together, these two features help create an ensemble of decision trees that are more able to
-     capture different "facets" of the patterns in the dataset, thereby aggregating to more robust (less biased) predictions.
-     
-     To learn more about the concepts and applications of random forest models, the sidebar provides several resources that I have found
-      particularly helpful in first learning about this topic.
+     capture different "facets" of the patterns in the dataset, thereby aggregating to more robust (less biased) predictions. To 
+     learn more about the concepts and applications of random forest models, the sidebar provides several resources that 
+     I have found particularly helpful when first learning about this topic.
 
     As supervised machine learning is now widely used in guiding business decision making, in this microlearning series we will 
     use the [IBM Telco dataset](https://github.com/IBM/telco-customer-churn-on-icp4d) as an example how the random forest model 
@@ -118,24 +119,44 @@ if page == pages[1]:
     if section == '1. Preview data':
         st.title('1. Preview data')
 
-        with st.echo():
-            df = pd.read_csv("https://github.com/treselle-systems/customer_churn_analysis/raw/master/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+        '''
+        The IBM Telco customer churn dataset, which details the personal characteristics and 
+        purchasing behaviours of ~7,000 previous or current customers, is a great example for exploring a typical 
+        use case of supervised machine learning in the business world.
+        
+        We will be building a random forest model to predict whether a customer will churn based on his or her demographics and purchasing 
+        history with the company, which can be used by the marketing and sales departments to inform advertising
+         and/or retention campaigns.
+        '''
+
+        '''
+        ```Python
+        import pandas as pd
+        
+        df = pd.read_csv("https://github.com/treselle-systems/customer_churn_analysis/raw/master/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+        ```
+        '''
 
         if st.checkbox("Preview data"):
+            import pandas as pd
+
+            df = pd.read_csv("https://github.com/treselle-systems/customer_churn_analysis/raw/master/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+
             st.dataframe(df.head(10).T)
 
 
             st.header(" ")
 
+
             '''
-            Some summary info:
+            To see a summary of this dataset:
             
             ```Python
             df.info()
             ``` 
             '''
 
-            if st.checkbox("Summarize the data"):
+            if st.checkbox("TL;DR?"):
                 st.dataframe(df_info(df))
 
                 st.markdown('''
@@ -149,9 +170,11 @@ if page == pages[1]:
     if section == '2. Remove customer ID column':
         st.title("2. Remove customer ID column")
 
-        st.error('''
-        Customer IDs need to be removed, not informative and high cardinality
-        ''')
+        '''
+        To start off, the `customerID` column contains the uniquely generated ID associated with each customer. As we would like to train 
+        a model that captures *general* patterns in customer characteristics and preferences in relation to the likelihood of churn, it may 
+        be preferable to remove this feature from the model.
+        '''
 
         df = pd.read_csv("https://github.com/treselle-systems/customer_churn_analysis/raw/master/WA_Fn-UseC_-Telco-Customer-Churn.csv")
 
@@ -159,21 +182,17 @@ if page == pages[1]:
             df.drop(['customerID'], axis = 1, inplace=True)
 
         if st.checkbox('Drop customer ID column'):
-
-            st.markdown('''
-            Just to check:
-            
-            ```Python
-            df.info()
-            ```
-            
-            ''')
+            '''
+            And... The `customerID` column is indeed gone...
+            '''
 
             st.dataframe(df_info(df))
 
 
+
+
     if section == '3. Re-encode variable':
-        st.title("3. Re-encode the variable `SeniorCitizen`")
+        st.title("3. Re-encode variable levels")
 
         ## Data processing up to now
         df = pd.read_csv("https://github.com/treselle-systems/customer_churn_analysis/raw/master/WA_Fn-UseC_-Telco-Customer-Churn.csv")
@@ -181,9 +200,10 @@ if page == pages[1]:
         df.drop(['customerID'], axis = 1, inplace=True)
 
 
-        st.error('''
-        Unlike other categorical variables in this dataset, `SeniorCitizen` is encoded by 0s and 1s, presumably corresponding to
-        "No"s and "Yes"s. ''')
+        '''
+        Next, unlike other categorical variables in this dataset, `SeniorCitizen` is encoded by 0s and 1s, presumably corresponding to
+        "No"s and "Yes"s. 
+        '''
 
         st.dataframe(df.tail(10).style.applymap(highlight_cols, subset=pd.IndexSlice[:, ['SeniorCitizen']]))
 
@@ -235,10 +255,6 @@ if page == pages[1]:
         if st.checkbox("Rename columns"):
             '''
             For a quick check:
-            
-            ```Python
-            df.columns
-            ```
             '''
 
             st.write(list(df.columns))
@@ -246,6 +262,11 @@ if page == pages[1]:
 
     if section == '5. Correct column data type':
         st.title("5. Correct column data type")
+
+        '''
+        Setting the correct data type for each column in a `pandas` dataframe is pretty important for the data to be treated in the 
+        "correct manner" in the preprocessing and model fitting process.  
+        '''
 
         st.header("5.1 Set `TotalCharges` as numeric type")
 
@@ -260,7 +281,7 @@ if page == pages[1]:
         v = df_info(df)
 
         '''
-        Next, we need convert the variable `TotalCharges` to the right data type (`float`), as it is currently 
+        First up, we need convert the variable `TotalCharges` to the right data type (`float`), as it is currently 
         set as a categorical variable (`object`), likely because the numbers are encoded as strings:
         '''
 
@@ -274,7 +295,7 @@ if page == pages[1]:
         ```
         '''
 
-        if st.checkbox("Convert column data type"):
+        if st.checkbox("Convert"):
             df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
 
             x = pd.DataFrame(df_info(df))
@@ -312,7 +333,7 @@ if page == pages[1]:
                 ```
                 '''
 
-                if st.checkbox("Let's see"):
+                if st.checkbox("Let's see..."):
                     df = df[['Gender', 'SeniorCitizen', 'Tenure', 'TotalCharges',  'Partner', 'Dependents',
                              'PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity',
                              'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV',
@@ -326,9 +347,11 @@ if page == pages[1]:
 
                     st.success('''
                     Indeed, the two sets of problematic data points are the same. 
-                    
-                    We can replace the null `TotalCharges` values with 0 for these 11 customers.
                     ''')
+
+                    '''
+                    So, we can replace the null `TotalCharges` values with 0 for these 11 customers.
+                    '''
 
                     with st.echo():
                         df.fillna(0, inplace=True)
@@ -337,21 +360,23 @@ if page == pages[1]:
 
                     st.header('5.2 Set categorical variables as "category" type')
 
-                    st.info('''
-                    Set categorical variables as "category" type
-                    - reduces memory usage
-                    ''')
+                    '''
+                    This step is not strictly necessary, but setting the column data types of categorical variables
+                    to "category", instead of leaving them as "object", has some advantages:
+                    
+                    - Reduces memory usage by the dataset
+                    - Where needed, can set order of the variable levels: *i.e.* "Small" < "Medium" < "Large"
+                    - Help some statistical and plotting packages to recognize categorical data types more easily
+                    '''
 
                     with st.echo():
                         for i in df:
                             if df[i].dtype == 'object':
                                 df[i] = df[i].astype('category')
 
-                    '''
-                    
-                    '''
 
-                    st.dataframe(df_info(df))
+                    if st.checkbox("Just to be thorough..."):
+                        st.dataframe(df_info(df))
 
 
 
