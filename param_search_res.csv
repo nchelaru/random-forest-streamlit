@@ -1,0 +1,5 @@
+Dataset,max_features,min_samples_leaf
+Original,log2,5
+Random oversampling,log2,1
+SMOTE-NC,1,10
+Clusters,log2,10
