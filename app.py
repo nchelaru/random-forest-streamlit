@@ -13,8 +13,9 @@ from figures import *
 import pickle
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
-from yellowbrick.classifier import classification_report
-from yellowbrick.classifier import confusion_matrix
+#from yellowbrick.classifier import classification_report
+#from yellowbrick.classifier import confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.ensemble import forest
 from rfpimp import *
 from functools import reduce
@@ -397,36 +398,57 @@ if page == pages[1]:
 
         df.fillna(0, inplace=True)
 
-        st.markdown('''
+        '''
         Finally, some categorical variables in this dataset have levels that can be grouped together, so as to reduce cardinality.
         
         We can look at the levels of each categorical variable by plotting:
-        ''')
+    
+        ```Python
+        ## Set up subplot grid
+        fig, axes = plt.subplots(nrows = 9, ncols = 2,
+                                 sharex = False, sharey = False,
+                                 figsize=(8, 15))
 
-        with st.echo():
-            ## Set up subplot grid
-            fig, axes = plt.subplots(nrows = 9, ncols = 2,
-                                     sharex = False, sharey = False,
-                                     figsize=(8, 15))
+        cat_list = []
 
-            cat_list = []
+        for i in df.columns:
+            if df[i].dtype == 'object':
+                cat_list.append(i)
 
-            for i in df.columns:
-                if df[i].dtype == 'object':
-                    cat_list.append(i)
+        for cat, ax in zip(cat_list, axes.flatten()):
+            if df[cat].dtype == 'object':
+                df[cat].value_counts().plot.barh(ax=ax)
+                ax.set_title(cat, fontsize=14)
+                ax.tick_params(axis='both', which='major', labelsize=12)
+                ax.grid(False)
 
-            for cat, ax in zip(cat_list, axes.flatten()):
-                if df[cat].dtype == 'object':
-                    df[cat].value_counts().plot.barh(ax=ax)
-                    ax.set_title(cat, fontsize=14)
-                    ax.tick_params(axis='both', which='major', labelsize=12)
-                    ax.grid(False)
+        fig.subplots_adjust(top=0.92, wspace=0.2, hspace=0.3)
+        ```
+        '''
 
-            fig.subplots_adjust(top=0.92, wspace=0.2, hspace=0.3)
 
 
         if st.checkbox("Abracadabra!"):
             with st.spinner('Working on it...'):
+                ## Set up subplot grid
+                fig, axes = plt.subplots(nrows = 9, ncols = 2,
+                                         sharex = False, sharey = False,
+                                         figsize=(8, 15))
+
+                cat_list = []
+
+                for i in df.columns:
+                    if df[i].dtype == 'object':
+                        cat_list.append(i)
+
+                for cat, ax in zip(cat_list, axes.flatten()):
+                    if df[cat].dtype == 'object':
+                        df[cat].value_counts().plot.barh(ax=ax)
+                        ax.set_title(cat, fontsize=14)
+                        ax.tick_params(axis='both', which='major', labelsize=12)
+                        ax.grid(False)
+
+                fig.subplots_adjust(top=0.92, wspace=0.2, hspace=0.3)
 
                 plt.tight_layout()
 
@@ -441,7 +463,8 @@ if page == pages[1]:
             can be combined into the "No" category for that variable, as that information is already encoded in "No" for 
             `InternetService` and `PhoneService`.
              
-             This helps to reduce noise in the dataset.
+             Combining these levels into their respective "No" groups will help to reduce noise in the dataset and improve interpretability 
+             of the resulting model.
              ''')
 
             st.markdown('''
@@ -645,23 +668,35 @@ if page == pages[3]:
     st.sidebar.markdown('''
     ---
     
-    More on the topic:
+    Feeling overwhelmed by all the new info coming your way?
+
+    No fear! Follow the checkboxes to run one code chunk at a time and progressively reveal new content!
+    
+    ---
+    
+    More about variable encoding:
+    
+    - Why One-Hot Encode Data in Machine Learning? [[Machine Learning Mastery]](https://machinelearningmastery.com/why-one-hot-encode-data-in-machine-learning/)
+    - List of categorical variable encoding techniques implemented in `scikit-learn` style 
+    [[`CategoryEncoders` documentation]](http://contrib.scikit-learn.org/categorical-encoding/index.html)
+    
     ''')
 
     df = pd.read_csv("https://github.com/nchelaru/data-prep/raw/master/telco_cleaned_yes_no.csv")
 
     '''
-    ### One-hot encoding
+    Most machine learning models cannot handle label data, instead requiring categorical variable levels to be mapped to numeric values.
+    There is a wide range of techniques available for this task, each appropriate for different types of data and machine learning models. 
+    If you are interested, check out the list of such techniques implemented in `scikit-learn` style by the `CategoryEncoders` package (see sidebar).
     
+    In this dataset, for majority of the variables that have "Yes"/"No" possible values, we can use integer encoding where they are replaced by 1/0, respectively.  However, for variables that have 
+    more than two levels or the two levels do not have an inherent ordinal relationship, like "Female"/"Male", 
+    we need to use one-hot encoding where each level is assigned its own column, so that no natural ordering can be assumed amongst the 
+    levels. Finally, as mentioned before, the random forest model does not require continuous variables (like `MonthlyCharges`) to be scaled, 
+    so we can leave as is.
     
-    ### Binary encoding
-    
-    ### Numeric variables
-    Random forest does not need numeric variables to be scaled
-    
-    ###
-    
-    We will start with compiling lists of names for variables that need to be one-hot or binary encoded, or not not at all.
+    We will start with compiling lists of names for variables that need to be 1) integer encoded, 2) one-hot encoded, or 3) left alone
+    by sort them according to data type and number of possible levels:
     '''
 
     with st.echo():
@@ -678,7 +713,7 @@ if page == pages[3]:
                 onehot_list.append(i)
 
     '''
-    Categorical variables to be binary encoded:
+    Categorical variables to be integer encoded:
     '''
 
     st.write(binary_list)
@@ -690,7 +725,7 @@ if page == pages[3]:
     st.write(onehot_list)
 
     '''
-    Numerical variables:
+    Continuous variables:
     '''
 
     st.write(numeric_list)
@@ -707,11 +742,24 @@ if page == pages[3]:
 
 
     if st.checkbox("Encode"):
-        st.dataframe(df.head(5).T)
+        st.dataframe(df.head(3).T)
+
+        st.write(list(df.columns))
 
         '''
-        Finally, the cleaned and encoded dataset is saved in feather format for easy loading for the next steps:
+        Now we see that the categorical variables whose possible values are not just "Yes"/"No" are split into multiple integer 
+        encoded columns. This is also helpful for when we are calculating feature importance after fitting the model, to see exactly 
+        how each possible value of these variables are associated with predicting customer churn.
+        
+        Finally, the cleaned and encoded dataset is saved in feather format for easy loading in the future:
         '''
+
+        df = df[["Tenure",  "MonthlyCharges",   "TotalCharges",   "Churn",  "SeniorCitizen", "Partner",
+                 "Dependents",  "PhoneService", "MultipleLines", "OnlineSecurity", "OnlineBackup", "DeviceProtection",
+                 "TechSupport", "StreamingTV", "StreamingMovies",  "PaperlessBilling", "Gender_Female",  "Gender_Male",
+                 "InternetService_DSL",   "InternetService_Fiber optic",  "InternetService_No", "Contract_Month-to-month",
+                 "Contract_One year",  "Contract_Two year",  "PaymentMethod_Bank transfer (automatic)",
+                 "PaymentMethod_Credit card (automatic)", "PaymentMethod_Electronic check",  "PaymentMethod_Mailed check"]]
 
         with st.echo():
             import feather
@@ -722,11 +770,8 @@ if page == pages[3]:
 
 if page == pages[4]:
     st.sidebar.markdown('''
-    
     ---
-    
     ''')
-
 
     topic = st.sidebar.radio("Outline:",
                      ("1. Original dataset",
@@ -734,44 +779,41 @@ if page == pages[4]:
                       "3. SMOTE-NC upsampling",
                       "4. Create new classes by clustering"))
 
+    st.sidebar.markdown('''
+    
+    ---
+    
+    Want to learn more?
+    
+    - Eight approaches to handle imbalanced classes [[Machine Learning Mastery]](https://machinelearningmastery.com/tactics-to-combat-imbalanced-classes-in-your-machine-learning-dataset/)
+    - A practical guide to oversampling algorithms [[`imbalance-learn` documentation]](https://imbalanced-learn.readthedocs.io/en/stable/over_sampling.html)
+    
+    ---
+
+    
+    Feeling overwhelmed by all the new info coming your way?
+
+    No fear! Follow the checkboxes to run one code chunk at a time and progressively reveal new content!
+    
+    
+    ''')
+
 
     if topic == "1. Original dataset":
-        df = pd.read_feather('./clean_data')
 
-        df = df[[
-            "Tenure",
-            "MonthlyCharges",
-            "TotalCharges",
-            "Churn",
-            "SeniorCitizen",
-            "Partner",
-            "Dependents",
-            "PhoneService",
-            "MultipleLines",
-            "OnlineSecurity",
-            "OnlineBackup",
-            "DeviceProtection",
-            "TechSupport",
-            "StreamingTV",
-            "StreamingMovies",
-            "PaperlessBilling",
-            "Gender_Female",
-            "Gender_Male",
-            "InternetService_DSL",
-            "InternetService_Fiber optic",
-            "InternetService_No",
-            "Contract_Month-to-month",
-            "Contract_One year",
-            "Contract_Two year",
-            "PaymentMethod_Bank transfer (automatic)",
-            "PaymentMethod_Credit card (automatic)",
-            "PaymentMethod_Electronic check",
-            "PaymentMethod_Mailed check"]]
+        st.header("5.1 Split the original dataset")
 
-        st.dataframe(df)
+        '''
+        We need to split the whole dataset into three chunks for training, testing and validating the model.
+        '''
 
         with st.echo():
+            ## Import libraries
             from sklearn.model_selection import train_test_split
+            import pickle
+
+            ## Import data
+            df = pd.read_feather('./clean_data')
 
             ## Shuffle the dataframe in place by taking a random sample with the same size as the original dataset
             df = df.sample(frac=1, replace=False, random_state=1)
@@ -788,13 +830,16 @@ if page == pages[4]:
                                                             test_size = 0.4,
                                                             stratify= y_testing)
 
+            ## Pickle the datasets for later use
+            with open('./telco_split_sets.pickle', 'wb') as f:
+                pickle.dump([X_train, y_train, X_test, y_test, X_val, y_val], f)
 
 
-        with open('./telco_split_sets.pickle', 'wb') as f:
-            pickle.dump([X_train, y_train, X_test, y_test, X_val, y_val], f)
 
-        data = {'X train (negative class)': y_train.value_counts()[0], 'X train (positive class)': y_train.value_counts()[1],
-                 'X test': X_test.shape[0], 'X val':X_val.shape[0]}
+        data = {'Training (negative class)': y_train.value_counts()[0],
+                'Training (positive class)': y_train.value_counts()[1],
+                'Test': X_test.shape[0],
+                'Validation':X_val.shape[0]}
 
         fig = plt.figure(
             FigureClass=Waffle,
@@ -808,43 +853,74 @@ if page == pages[4]:
             figsize=(8, 6)
         )
 
-        if st.checkbox("Waffle"):
+        if st.checkbox("Visualize the datasets"):
             st.pyplot(width=900, height=800)
 
+            '''
+            Immediately, we see that there are way fewer instances belonging to positive class ("Churn) than in the 
+            negative class ("No churn"). This is because only about a third of the ~7,000c customers have churned. This class imbalance 
+            is a common problem that would negatively impact the performance of the model, as it simply do not have enough instances of 
+            "Churn" to learn from. 
+            
+            Coming up next, we will try out two upsampling techniques that try to create more instances of the positive class. Then, we will 
+            use unsupervised clustering of the entire dataset to see if we can create new *classes* as some sort of 
+             proxy for `Churn` to predict, instead of predicting `Churn` itself.
+            '''
+
     if topic == "2. Random upsampling":
+
+        '''
+        ## 5.2 Random upsampling
+        
+        The simplest approach to upsampling is to randomly draw instances from the minority class with replacement, which is implemented by
+        `RandomOverSampler()` from the `imbalanced-learn` package.
+        
+        As an important note, you **must only upsample the training set**. As naive upsampling duplicates certain data points 
+        and SMOTE generates new data points that are similar to existing ones, by splitting *after* upsampling, you are introducing redundancy 
+        between the training and test sets. This way, the model will have already "seen" some of the data in the test set, leading to overly optimistic measures of its performance. 
+
+        For a demonstration of what happens if the data set is upsampled before the train-test split, please see a post 
+        by Nick Becker [here](https://beckernick.github.io/oversampling-modeling/).
+ 
+        ```Python
+        ## Import libraries
+        from imblearn.over_sampling import RandomOverSampler
+
+        ## Import data
         infile = open('./telco_split_sets.pickle','rb')
 
         X_train, y_train, X_test, y_test, X_val, y_val = pickle.load(infile)
 
-        with st.echo():
-            ## Import libraries
-            from imblearn.over_sampling import RandomOverSampler
-            from collections import Counter
+        ## Naive upsample
+        ros = RandomOverSampler(random_state=0)
+        X_ros, y_ros = ros.fit_resample(X_train, y_train)
 
-            ## Naive upsample
-            ros = RandomOverSampler(random_state=0)
-            X_ros, y_ros = ros.fit_resample(X_train, y_train)
+        ## Rename upsampled dataset with original column names
+        X_ros = pd.DataFrame(X_ros)
 
-            ## Rename upsampled dataset with original column names
-            X_ros = pd.DataFrame(X_ros)
+        X_ros.columns = X_train.columns
 
-            X_ros.columns = X_train.columns
+        ## Reset numerical column data types
+        num_list = ['Tenure', 'MonthlyCharges', 'TotalCharges']
 
-            ## Reset numerical column data types
-            num_list = ['Tenure', 'MonthlyCharges', 'TotalCharges']
-
-            for col in num_list:
-                X_ros[col] = X_ros[col].astype('float64')
+        for col in num_list:
+            X_ros[col] = X_ros[col].astype('float64')
 
         with open('./random_split_sets.pickle', 'wb') as f:
             pickle.dump([X_ros, y_ros, X_test, y_test, X_val, y_val], f)
+        ```
+        '''
+
+        infile = open('./random_split_sets.pickle','rb')
+
+        X_ros, y_ros, X_test, y_test, X_val, y_val = pickle.load(infile)
 
         x = pd.DataFrame(y_ros)[0].value_counts()
 
-        data = {'Training set (positive class)' : x[0],
-                'Training set  (negative class)' : x[1],
-                'Test set' : X_test.shape[0],
-                'Validation set' : X_val.shape[0]}
+        data = {'Training (positive class)' : x[0],
+                'Training (negative class)' : x[1],
+                'Test' : X_test.shape[0],
+                'Validation' : X_val.shape[0]}
 
         fig = plt.figure(
             FigureClass=Waffle,
@@ -858,42 +934,65 @@ if page == pages[4]:
             figsize=(8, 6)
         )
 
-        if st.checkbox("Make plot"):
-            st.markdown('''
-                Each symbol represents ~86 customers.
-                ''')
+        '''
+        ##
+        '''
 
-            st.pyplot(width=900, height=800)
+        if st.checkbox("Upsample minority class"):
+            st.markdown('''
+            Now we have equal-sized positive and negative classes in the training set, each containing 4,130 instances.
+            
+            Each symbol represents ~86 customers.
+            ''')
+
+            plt.tight_layout()
+
+            st.pyplot(width=900, height=700)
+
 
 
     if topic == "3. SMOTE-NC upsampling":
+        st.header("5.3 Create synthetic data")
+
+        '''
+        SMOTE (Synthetic Minority Over-sampling Technique) creates synthetic data points by creating and random choosing k-nearest-neighbours 
+        of instances in the minority class. SMOTE-NC is an extension of the method for 
+        use with datasets that contain both categorical and continuous variables, like the Telco customer churn dataset.
+        
+        ```Python
+        ## Import library
+        from imblearn.over_sampling import SMOTENC
+
+        ## Import data
         infile = open('./telco_split_sets.pickle','rb')
 
         X_train, y_train, X_test, y_test, X_val, y_val = pickle.load(infile)
 
+        ## I have reordered the columns so that the three continuous
+        ## variables are in the first three positions
+        cat_range = range(3, 27)
 
-        with st.echo():
-            ## Import library
-            from imblearn.over_sampling import SMOTENC
-            from collections import Counter
+        ## Upsampling using SMOTE-NC
+        smote_nc = SMOTENC(categorical_features=cat_range, random_state=0)
 
-            ## Get indices of columns containing categorical features
-            cat_range = range(3, 27)
+        X_resampled, y_resampled = smote_nc.fit_resample(X_train, y_train)
 
-            ## Upsampling using SMOTE-NC
-            smote_nc = SMOTENC(categorical_features=cat_range, random_state=0)
-
-            X_resampled, y_resampled = smote_nc.fit_resample(X_train, y_train)
-
+        ## Save for future use
         with open('./smote_split_sets.pickle', 'wb') as f:
             pickle.dump([X_resampled, y_resampled, X_test, y_test, X_val, y_val], f)
+        ```
+        '''
+
+        infile = open('./smote_split_sets.pickle','rb')
+
+        X_resampled, y_resampled, X_test, y_test, X_val, y_val = pickle.load(infile)
 
         x = pd.DataFrame(y_resampled)[0].value_counts()
 
-        data = {'Training set (positive class)' : x[0],
-                'Training set  (negative class)' : x[1],
-                'Test set' : X_test.shape[0],
-                'Validation set' : X_val.shape[0]}
+        data = {'Training (positive class)' : x[0],
+                'Training (negative class)' : x[1],
+                'Test' : X_test.shape[0],
+                'Validation' : X_val.shape[0]}
 
         fig = plt.figure(
             FigureClass=Waffle,
@@ -907,429 +1006,449 @@ if page == pages[4]:
             figsize=(8, 6)
         )
 
-        if st.checkbox("Make plot"):
+        if st.checkbox("Let there be more data points!"):
             st.markdown('''
-                Each symbol represents ~86 customers.
-                ''')
+            Again, we now have equal-sized positive and negative classes in the training set, each containing 4,130 instances.
+               
+            Each symbol represents ~86 customers.
+            ''')
+
+            plt.tight_layout()
 
             st.pyplot(width=900, height=800)
 
 
     if topic == "4. Create new classes by clustering":
+        st.header('5.4 Unsupervised clustering')
+
+        '''
+        As an interesting alternative approach, we might try redefining the problem at hand.
+        
+        From [principal dimensions analysis](http://rpubs.com/nchelaru/famd) done on this data set, I found that the "Churn" and "No Churn" populations 
+        of customers are largely overlapping when projected onto the new principal dimension feature space, suggesting that they are not linearly 
+        separable. 
+        '''
+
+        famd_res = pd.read_csv('./famd_res.csv')
+
+        fig = px.scatter_3d(famd_res, x='coord.Dim.1', y='coord.Dim.2', z='coord.Dim.3',
+                            color='Churn')
+
+        fig.for_each_trace(lambda t: t.update(name=t.name.replace("Churn=","")))
+
+        fig.update_traces(marker=dict(size=3, opacity=0.5))
+
+        st.plotly_chart(fig, width=800, height=600)
+
+        '''
+        This makes sense for a real world dataset, as customers may leave or stay at various times due interplays amongst a myriad of reasons. 
+        In other words, whether a customer churns given his/her personal and buying characteristics is much less deterministic than the species of an iris specimen
+        given its physical dimensions.
+        
+        Instead, we may try to use unsupervised clustering to identify "natural" groupings within this dataset. If this grouping has some correspondence with customer
+        churn behaviour, it may be interesting (and potentially more fruitful) to predict this group membership instead. Here we will do so by adapting the workflow for clustering mixed-type
+        data (in R) shown [here](https://towardsdatascience.com/clustering-on-mixed-type-data-8bbd0a2569c3).
+        '''
+
         df = pd.read_csv('./gower_res.csv')
 
-        st.markdown(
-        '''
-        ```R
-        ## Import libraries
-        library(cluster)
-        library(Rtsne)
-        
-        raw_df <- read.csv("https://github.com/nchelaru/data-prep/raw/master/telco_cleaned_yes_no.csv")
-        df <- data.frame(raw_df)
-        
-        ## Scale numeric features
-        ind <- sapply(df, is.numeric)
-        df[ind] <- lapply(df[ind], scale)
-        df[ind] <- lapply(df[ind], as.numeric)
-        
-        ## Calculate Gower distance
-        gower_dist <- daisy(df, metric = "gower")
-        gower_mat <- as.matrix(gower_dist)
-        
-        ## Optimal number of clusters
-        sil_width <- c(NA)
-
-        for(i in 2:5){  
-          pam_fit <- pam(gower_dist, diss = TRUE, k = i)  
-          sil_width[i] <- pam_fit$silinfo$avg.width  
-        }
-        
-        ## Visualize clusters by tSNE
-        k <- 2     # No. clusters
-
-        pam_fit <- pam(gower_dist, diss = TRUE, k)
-        
-        pam_results <- df %>%
-          mutate(cluster = pam_fit$clustering) %>%
-          group_by(cluster) %>%
-          do(the_summary = summary(.))
-
-        tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
-
-        tsne_data <- tsne_obj$Y %>%
-          data.frame() %>%
-          setNames(c("X", "Y")) %>%
-          mutate(cluster = factor(pam_fit$clustering)) 
-        ```
-        ''')
-
-        st.image('./tsne.png', use_column_width=True)
-
-        st.markdown('''
-        ```R
-        library(dendextend)
-        library(ggplot2)
-        
-        fit <- hclust(d=gower_dist, method="complete")  
-        
-        dend <- fit %>% as.dendrogram %>% hang.dendrogram
-        
-        dend %>% color_branches(k=2) %>% set("labels", "") %>% plot(horiz=FALSE)
-        ```
-        ''')
-
-        st.image('./dendro.png', use_column_width=True)
-
-        st.markdown('''
-        ```R
-        groups <- cutree(fit, k=2)   # "k=" defines the number of clusters you are using 
-        
-        new_df <- cbind(raw_df, groups)
-        ```
-        ''')
-
-        ## Reformat columns to contain column name
-        col_list = ['SeniorCitizen', 'Partner', 'Dependents','PhoneService', 'DeviceProtection', 'MultipleLines', 'OnlineSecurity',
-                    'OnlineBackup', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'PaperlessBilling', 'Churn']
+        if st.checkbox("Cluster the data"):
+            '''
+            ```R
+            ## Import libraries
+            library(cluster)
+            library(dendextend)
+            library(ggplot2)
+            
+            raw_df <- read.csv("https://github.com/nchelaru/data-prep/raw/master/telco_cleaned_yes_no.csv")
+            df <- data.frame(raw_df)
+            
+            ## Scale numeric features
+            ind <- sapply(df, is.numeric)
+            df[ind] <- lapply(df[ind], scale)
+            df[ind] <- lapply(df[ind], as.numeric)
+            
+            ## Calculate Gower distance
+            gower_dist <- daisy(df, metric = "gower")
+            gower_mat <- as.matrix(gower_dist)
+            
+            ## Optimal number of clusters
+            sil_width <- c(NA)
+    
+            for(i in 2:5){  
+              pam_fit <- pam(gower_dist, diss = TRUE, k = i)  
+              sil_width[i] <- pam_fit$silinfo$avg.width  
+            }
+            ```
+            '''
+
+            st.error('plot opt_clusters.csv to show optimal number of clusters = 2')
+
+            '''
+            ```R
+            ## Hierarchically cluster based on calculated distance
+            fit <- hclust(d=gower_dist, method="complete")  
+            
+            dend <- fit %>% as.dendrogram %>% hang.dendrogram
+            
+            dend %>% color_branches(k=2) %>% set("labels", "") %>% plot(horiz=FALSE)
+            ```
+            '''
+
+            st.image('./dendro.png', use_column_width=True)
+
+            st.markdown('''
+            We see that these two clusters are roughly equal in size, which avoids the class imbalance issue.
+            
+            Now let's see how they differ in terms of customer characteristics and, particularly, **churn**.
+            
+            ```R
+            groups <- cutree(fit, k=2)   # "k=" defines the number of clusters you are using 
+            
+            new_df <- cbind(raw_df, groups)
+            ```
+            ''')
+
+            if st.checkbox("Compare these two groups"):
+                ## Reformat columns to contain column name
+                col_list = ['SeniorCitizen', 'Partner', 'Dependents','PhoneService', 'DeviceProtection', 'MultipleLines', 'OnlineSecurity',
+                            'OnlineBackup', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'PaperlessBilling', 'Churn']
+
+                for col in col_list:
+                    df[col] = np.where(df[col]=='Yes', col, 'No'+' '+col)
+
+                ## Plots
+                x = df[df['groups'] == 1]
+
+                y = df[df['groups'] == 2]
+
+                def get_values(df, label):
+                    o =[]
+
+                    for i in df.columns:
+                        if df[i].dtype == object:
+                            o.append(df[i].value_counts().to_dict())
+
+                    result = {}
+
+                    for k in o:
+                        result.update((k))
+
+                    j = pd.DataFrame()
+
+                    j['Category'] = [key for key, value in result.items() if not 'No' in key]
+
+                    j[label] = [value/df.shape[0]*100 for key, value in result.items() if not 'No' in key]
+
+                    return j
+
+                elec_res = get_values(x, "Group 1")
+
+                non_res = get_values(y, "Group 2")
+
+                final = pd.merge(elec_res, non_res, on='Category', how='inner')
+
+                final['Diff'] = final['Group 1'] - final['Group 2']
+
+                # Reorder it following the values of the first value:
+                ordered_df = final.sort_values(by='Diff')
+                my_range=range(1,len(final.index)+1)
 
-        for col in col_list:
-            df[col] = np.where(df[col]=='Yes', col, 'No'+' '+col)
+                plt.hlines(y=my_range, xmin=ordered_df['Group 1'], xmax=ordered_df['Group 2'], color='grey', alpha=0.4)
+                plt.scatter(ordered_df['Group 1'], my_range, color='red', alpha=1, label='Group 1')
+                plt.scatter(ordered_df['Group 2'], my_range, color='green', alpha=1, label='Group 2')
+                plt.legend(loc='upper right', prop={'size': 12})
 
-        ## Plots
-        x = df[df['groups'] == 1]
+                # Add title and axis names
+                plt.yticks(my_range, ordered_df['Category'])
+                plt.xlabel('% of customers in group ')
 
-        y = df[df['groups'] == 2]
+                plt.style.use('default')
 
-        def get_values(df, label):
-            o =[]
-
-            for i in df.columns:
-                if df[i].dtype == object:
-                    o.append(df[i].value_counts().to_dict())
-
-            result = {}
-
-            for k in o:
-                result.update((k))
-
-            j = pd.DataFrame()
-
-            j['Category'] = [key for key, value in result.items() if not 'No' in key]
-
-            j[label] = [value/df.shape[0]*100 for key, value in result.items() if not 'No' in key]
-
-            return j
-
-        elec_res = get_values(x, "Group 1")
-
-        non_res = get_values(y, "Group 2")
-
-        final = pd.merge(elec_res, non_res, on='Category', how='inner')
-
-        final['Diff'] = final['Group 1'] - final['Group 2']
-
-        # Reorder it following the values of the first value:
-        ordered_df = final.sort_values(by='Diff')
-        my_range=range(1,len(final.index)+1)
-
-        plt.hlines(y=my_range, xmin=ordered_df['Group 1'], xmax=ordered_df['Group 2'], color='grey', alpha=0.4)
-        plt.scatter(ordered_df['Group 1'], my_range, color='red', alpha=1, label='Group 1')
-        plt.scatter(ordered_df['Group 2'], my_range, color='green', alpha=1, label='Group 2')
-        plt.legend(loc='upper right', prop={'size': 12})
-
-        # Add title and axis names
-        plt.yticks(my_range, ordered_df['Category'])
-        plt.xlabel('% of customers in group ')
-
-        plt.style.use('default')
-
-        plt.rcParams.update({'figure.figsize':[10, 8], 'font.size':16})
-
-        plt.tight_layout()
-
-        st.pyplot()
-
-        n_bins = st.slider("Number of bins",
-                           min_value=10, max_value=50, value=10, step=2)
-
-        fig = px.histogram(df, x="MonthlyCharges", color="groups", opacity=0.4,
-                           color_discrete_sequence = ['red', 'green'], barmode = 'overlay', nbins=n_bins)
-
-        fig.update_layout(legend_orientation="h",
-                          legend=dict(x=0, y=1.1),
-                          yaxis=go.layout.YAxis(
-                              title=go.layout.yaxis.Title(
-                                  text="Count"
-                              )
-                          ))
-
-        fig2 = px.histogram(df, x="Tenure", color="groups", opacity=0.4,
-                            color_discrete_sequence = ['red', 'green'], barmode = 'overlay', nbins=n_bins)
-
-        fig2.update_layout(legend_orientation="h",
-                          legend=dict(x=0, y=1.1),
-                          yaxis=go.layout.YAxis(
-                              title=go.layout.yaxis.Title(
-                                  text="Count"
-                              )
-                          ))
-
-        st.plotly_chart(fig)
-
-        st.plotly_chart(fig2)
-
-        df['groups'] = df['groups'].astype('str')
-
-        df.drop('Churn', axis=1, inplace=True)
-
-        with st.echo():
-            binary_list = ["SeniorCitizen", "Partner", "Dependents", "PhoneService", "MultipleLines",
-                           "OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV",
-                           "StreamingMovies", "PaperlessBilling"]
-
-            onehot_list = ["Gender", "InternetService", "Contract", "PaymentMethod"]
-
-            numeric_list = ["Tenure", "MonthlyCharges", "TotalCharges"]
-
-            df['groups'] = np.where(df['groups'] == '2', 0, 1)
-
-            df[binary_list] = np.where(df[binary_list] == 'Yes', 1, 0 )
-
-            df = pd.get_dummies(df, columns=onehot_list)
-
-        st.dataframe(df.head().T)
-
-
-
-        with st.echo():
-            from sklearn.model_selection import train_test_split
-
-            ## Shuffle the dataframe in place by taking a random sample with the same size as the original dataset
-            df = df.sample(frac=1, replace=False, random_state=1)
-
-            ## 80/20 split into training and testing sets, stratified by the target variable
-            X_train, X_testing, y_train, y_testing = train_test_split(df.drop(['groups'], axis=1),
-                                                                      df['groups'],
-                                                                      test_size = 0.2,
-                                                                      stratify=df['groups'])
-
-            ## Just in case it's needed later, also split testing set into test and validation sets
-            X_test, X_val, y_test, y_val = train_test_split(X_testing,
-                                                            y_testing,
-                                                            test_size = 0.4,
-                                                            stratify= y_testing)
-
-
-
-        with open('./cluster_split_sets.pickle', 'wb') as f:
-            pickle.dump([X_train, y_train, X_test, y_test, X_val, y_val], f)
-
-        data = {'X train (negative class)': y_train.value_counts()[0], 'X train (positive class)': y_train.value_counts()[1],
-                'X test': X_test.shape[0], 'X val':X_val.shape[0]}
-
-        fig = plt.figure(
-            FigureClass=Waffle,
-            rows=7,
-            columns=10,
-            values=data,
-            legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.03), "fontsize":16, 'ncol':2},
-            icons='user',
-            font_size=22,
-            icon_legend=True,
-            figsize=(8, 6)
-        )
-
-        if st.checkbox("Waffle"):
-            st.pyplot(width=900, height=800)
-
-
-
-if page == pages[5]:
-    st.sidebar.markdown('''
-    ---
-    ''')
-
-    st.markdown('''
-    ```Python
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.model_selection import GridSearchCV
-
-    params = {
-        'min_samples_leaf': [1, 3, 5, 10, 25, 100],
-        'max_features': ['sqrt', 'log2', 0.5, 1]
-    }
-
-    rf = RandomForestClassifier(n_estimators=50, oob_score=True)
-    grid = GridSearchCV(rf, param_grid=params, scoring='f1', n_jobs=-1)
-    grid.fit(X_train, y_train)
-    grid.best_params_
-    ```
-    ''')
-
-
-    if st.checkbox("Tune parameters"):
-
-        st.dataframe(param_search())
-
-        datasets = ['./telco_split_sets.pickle', './random_split_sets.pickle',
-                    './smote_split_sets.pickle', './cluster_split_sets.pickle']
-
-        infile = open('./all_params.pickle', 'rb')
-        params_list = pickle.load(infile)
-
-        def score(m):
-            res = {"Score on training set" : m.score(X_train, y_train),
-                   "Score on validation set" : m.score(X_val, y_val),
-                   "Out of bag score" : m.oob_score_}
-            return res
-
-        set_rf_samples(1500)
-
-
-        if st.checkbox("Check scores:"):
-            with st.spinner("Hang on right, this takes a bit..."):
-                score_list = []
-
-                for dataset, params in zip(datasets, params_list):
-
-                    infile = open(dataset, "rb")
-
-                    X_train, y_train, X_test, y_test, X_val, y_val = pickle.load(infile)
-
-                    m = RandomForestClassifier(n_estimators=500,
-                                               min_samples_leaf=params['min_samples_leaf'],
-                                               max_features=params['max_features'],
-                                               n_jobs=-1, oob_score=True)
-
-                    m.fit(X_train, y_train)
-
-                    score_list.append(score(m))
-
-                scores = pd.DataFrame(score_list).set_index(pd.Index(['Original', 'Random oversample', 'SMOTE-NC', 'Clusters']))
-
-                scores.plot.barh(figsize=(8, 6))
+                plt.rcParams.update({'figure.figsize':[10, 8], 'font.size':16})
 
                 plt.tight_layout()
 
                 st.pyplot()
 
-                plt.cla()
+                n_bins = st.slider("Number of bins",
+                                   min_value=10, max_value=50, value=10, step=2)
+
+                fig = px.histogram(df, x="MonthlyCharges", color="groups", opacity=0.4,
+                                   color_discrete_sequence = ['red', 'green'], barmode = 'overlay', nbins=n_bins)
+
+                fig.update_layout(legend_orientation="h",
+                                  legend=dict(x=0, y=1.1),
+                                  yaxis=go.layout.YAxis(
+                                      title=go.layout.yaxis.Title(
+                                          text="Count"
+                                      )
+                                  ))
+
+                fig2 = px.histogram(df, x="Tenure", color="groups", opacity=0.4,
+                                    color_discrete_sequence = ['red', 'green'], barmode = 'overlay', nbins=n_bins)
+
+                fig2.update_layout(legend_orientation="h",
+                                  legend=dict(x=0, y=1.1),
+                                  yaxis=go.layout.YAxis(
+                                      title=go.layout.yaxis.Title(
+                                          text="Count"
+                                      )
+                                  ))
+
+                st.plotly_chart(fig)
+
+                st.plotly_chart(fig2)
+
+                df['groups'] = df['groups'].astype('str')
+
+                df.drop('Churn', axis=1, inplace=True)
+
+                with st.echo():
+                    binary_list = ["SeniorCitizen", "Partner", "Dependents", "PhoneService", "MultipleLines",
+                                   "OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV",
+                                   "StreamingMovies", "PaperlessBilling"]
+
+                    onehot_list = ["Gender", "InternetService", "Contract", "PaymentMethod"]
+
+                    numeric_list = ["Tenure", "MonthlyCharges", "TotalCharges"]
+
+                    df['groups'] = np.where(df['groups'] == '2', 0, 1)
+
+                    df[binary_list] = np.where(df[binary_list] == 'Yes', 1, 0 )
+
+                    df = pd.get_dummies(df, columns=onehot_list)
+
+
+                if st.checkbox("Encode and split the data"):
+                    st.dataframe(df.head().T)
+
+                    with st.echo():
+                        from sklearn.model_selection import train_test_split
+
+                        ## Shuffle the dataframe in place by taking a random sample with the same size as the original dataset
+                        df = df.sample(frac=1, replace=False, random_state=1)
+
+                        ## 80/20 split into training and testing sets, stratified by the target variable
+                        X_train, X_testing, y_train, y_testing = train_test_split(df.drop(['groups'], axis=1),
+                                                                                  df['groups'],
+                                                                                  test_size = 0.2,
+                                                                                  stratify=df['groups'])
+
+                        ## Just in case it's needed later, also split testing set into test and validation sets
+                        X_test, X_val, y_test, y_val = train_test_split(X_testing,
+                                                                        y_testing,
+                                                                        test_size = 0.4,
+                                                                        stratify= y_testing)
+
+
+
+                    with open('./cluster_split_sets.pickle', 'wb') as f:
+                        pickle.dump([X_train, y_train, X_test, y_test, X_val, y_val], f)
+
+                    data = {'Training (negative class)': y_train.value_counts()[0], 'Training (positive class)': y_train.value_counts()[1],
+                            'Test': X_test.shape[0], 'Validation':X_val.shape[0]}
+
+                    fig = plt.figure(
+                        FigureClass=Waffle,
+                        rows=7,
+                        columns=10,
+                        values=data,
+                        legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.03), "fontsize":14, 'ncol':2},
+                        icons='user',
+                        font_size=22,
+                        icon_legend=True,
+                        figsize=(8, 6)
+                    )
+
+                    st.pyplot(width=900, height=800)
+
+
+
+if page == pages[5]:
+    st.title("6. Parameter tuning and model fitting")
+
+    st.sidebar.markdown('''
+    
+    ---
+    
+    Want to learn more?
+    
+    - Evaluating Machine Learning Models [[Alice Zheng]](https://www.oreilly.com/ideas/evaluating-machine-learning-models/page/5/hyperparameter-tuning)
+    
+    ''')
+
+    st.header("Hyperparameter tuning")
+
+    '''
+    Finding the optimal (to a degree) set of model hyperparameter settings for a particular dataset is key to getting
+     the best prediction accuracy out of it. This is done by searching through a predefined hyperparameter space ("grid") for the 
+     combination that achieves the best performance. Two most commonly used approaches are grid search and random search, where the former 
+     exhaustively searches through every possible combination in the grid, and the latter evaluates only a random sample of points on this 
+     grid. [Benchmarking](https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html)
+     shows that random search returns similar parameters as grid search but with much lower run time, so we will be using 
+     this method here:
+    
+    ```Python
+    from sklearn.model_selection import RandomizedSearchCV
+    from sklearn.datasets import load_digits
+    from sklearn.ensemble import RandomForestClassifier
+
+
+    # Utility function to report best scores
+    def report(results, n_top=1):
+        for i in range(1, n_top + 1):
+            candidates = np.flatnonzero(results['rank_test_score'] == i)
+            for candidate in candidates:
+                return results['mean_test_score'][candidate], results['std_test_score'][candidate], results['params'][candidate]
+            
+    ## Specify parameter space
+    param_dist = {"n_estimators": [600, 800, 1000],
+                  "max_depth": sp_randint(1, 7),
+                  'max_features': ['auto', 'sqrt'],
+                  "min_samples_split": sp_randint(2, 11),
+                  'min_samples_leaf': [1, 2, 4],
+                  "bootstrap": [True, False],
+                  "criterion": ["gini", "entropy"]}
+    
+     # build a classifier
+    clf = RandomForestClassifier()
+
+    # run randomized search
+    random_search = RandomizedSearchCV(clf, 
+                                       param_distributions=param_dist, 
+                                       n_iter=20, 
+                                       cv=5, 
+                                       iid=False)
+
+    ```
+    '''
+
+
+    if st.checkbox("Tune parameters"):
+
+
+        st.dataframe(param_search().T)
+
+        st.header("Train models")
+
+        '''
+        ```Python
+        Code
+        ```
+        '''
+
+        if st.checkbox("Check scores:"):
+            with st.spinner("Hang on tight, this takes a bit..."):
+                scores = train_models()
+
+                scores.plot.barh(figsize=(8, 6))
+
+                plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=3, fontsize=12)
+
+                plt.tight_layout()
+
+                st.pyplot()
+
+                plt.clf()
 
 
                 if st.checkbox("Plot confusion matrix"):
-                    for dataset, params in zip(datasets, params_list):
+                    infile = open('./cmatrix_dict.pickle', 'rb')
 
-                        infile = open(dataset, "rb")
+                    cmatrix_dict = pickle.load(infile)
 
-                        X_train, y_train, X_test, y_test, X_val, y_val = pickle.load(infile)
+                    names = ['Original', 'Random', 'SMOTE', 'Clusters']
 
-                        m = RandomForestClassifier(n_estimators=500,
-                                                   min_samples_leaf=params['min_samples_leaf'],
-                                                   max_features=params['max_features'],
-                                                   n_jobs=-1, oob_score=True)
+                    fig = plt.figure()
+                    fig.subplots_adjust(hspace=0.3, wspace=0.3)
 
-                        cmatrix = confusion_matrix(RandomForestClassifier(n_estimators=500,
-                                                                          min_samples_leaf=params['min_samples_leaf'],
-                                                                          max_features=params['max_features'],
-                                                                          n_jobs=-1, oob_score=True),
-                                                   X_test, y_test,
-                                                   classes=['No churn', 'Churn'],
-                                                   cmap="Greens")
+                    for i, c in zip(range(1, 5), names):
+                        ax = fig.add_subplot(2, 2, i)
+                        sns.heatmap(cmatrix_dict[c], annot=True, ax=ax, annot_kws={"size": 20}, fmt='d', cbar=False)
+                        ax.set_title(c, fontsize=26)
 
-                        cmatrix.show()
+                    plt.tight_layout()
 
-                        st.pyplot()
+                    st.pyplot(width=800, height=1000)
+
+                    plt.clf()
+
+
+
+                    if st.checkbox("Check classification report"):
+                        infile = open('./crep_dict.pickle', 'rb')
+
+                        crep_dict = pickle.load(infile)
+
+                        names = ['Original', 'Random', 'SMOTE', 'Clusters']
+
+                        fig = plt.figure()
+                        fig.subplots_adjust(hspace=0.4, wspace=0.4)
+
+                        sns.set(font_scale = 2)
+
+                        for i, c in zip(range(1, 5), names):
+                            df = pd.DataFrame(crep_dict[c]).T.iloc[:2]
+                            ax = fig.add_subplot(2, 2, i)
+
+                            sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 20},  cmap="YlGnBu", cbar=False, vmin=0, vmax=1)
+                            ax.set_title(c, fontsize=26)
+
+
+                        plt.tight_layout()
+
+                        st.pyplot(width=800, height=1000)
 
                         plt.clf()
 
-                    if st.checkbox("Check classification report"):
-                        for dataset, params in zip(datasets, params_list):
-
-                            infile = open(dataset, "rb")
-
-                            X_train, y_train, X_test, y_test, X_val, y_val = pickle.load(infile)
-
-                            m = RandomForestClassifier(n_estimators=500,
-                                                       min_samples_leaf=params['min_samples_leaf'],
-                                                       max_features=params['max_features'],
-                                                       n_jobs=-1, oob_score=True)
-
-                            crep = classification_report(RandomForestClassifier(n_estimators=500,
-                                                                                min_samples_leaf=params['min_samples_leaf'],
-                                                                                max_features=params['max_features'],
-                                                                                n_jobs=-1, oob_score=True),
-                                                         X_test, y_test,
-                                                         cmap="Greens",
-                                                         classes=['No churn', 'Churn']
-                                                         )
 
 
-                            crep.show()
 
-                            st.pyplot()
-
-                            plt.clf()
 
 
 if page == pages[6]:
-    # names = ['Original', 'Random oversampled', 'SMOTE-NC', 'Clustered']
-    #
-    # datasets = ['./telco_split_sets.pickle', './random_split_sets.pickle',
-    #             './smote_split_sets.pickle', './cluster_split_sets.pickle']
-    #
-    # infile = open('./all_params.pickle', 'rb')
-    # params_list = pickle.load(infile)
-    #
-    #
-    # set_rf_samples(1500)
-    #
-    # imp_list = []
-    #
-    # for dataset, params, name in zip(datasets, params_list, names):
-    #
-    #     infile = open(dataset, "rb")
-    #
-    #     X_train, y_train, X_test, y_test, X_val, y_val = pickle.load(infile)
-    #
-    #     m = RandomForestClassifier(n_estimators=500,
-    #                                min_samples_leaf=params['min_samples_leaf'],
-    #                                max_features=params['max_features'],
-    #                                n_jobs=-1, oob_score=True)
-    #
-    #     m.fit(X_train, y_train)
-    #
-    #     imp = importances(m, X_test, y_test, n_samples=-1)
-    #
-    #     imp.columns = [name]
-    #
-    #     imp_list.append(imp)
-    #
-    #
-    # imp_df = pd.concat(imp_list, axis=1, sort=True)
-    #
-    # with open('./imp_df.pickle', 'wb') as f:
-    #     pickle.dump(imp_df, f)
+    st.sidebar.markdown('''
+    
+    ---
+
+    
+    Want to learn more about model interpretability?
+    
+    - Interpretable Machine Learning - A Guide for Making Black Box Models Explainable 
+    [[Christoph Molnar]](https://christophm.github.io/interpretable-ml-book/)
+    - Permutation feature importance for random forest models [[fast.ai]](https://explained.ai/rf-importance/)
+    
+    ''')
 
     '''
     ```Python
     m = RandomForestClassifier(n_estimators=500,
-                                min_samples_leaf=params['min_samples_leaf'],
-                                max_features=params['max_features'],
-                                n_jobs=-1, oob_score=True)
-    
+                               min_samples_leaf=params['min_samples_leaf'],
+                               max_features=params['max_features'],
+                               n_jobs=-1, oob_score=True)
+
     m.fit(X_train, y_train)
-    
+
     imp = importances(m, X_test, y_test, n_samples=-1)
     ```
-    
     '''
 
 
-    infile = open('./imp_df.pickle', 'rb')
-    imp_df = pickle.load(infile)
+    infile = open('./imp_dict.pickle', 'rb')
+    imp_dict = pickle.load(infile)
+
+    imp_list = []
+
+    for i in ['Original', 'Random', 'SMOTE', 'Clusters']:
+        df = imp_dict[i]
+        imp_list.append(df)
+
+    imp_df = pd.concat(imp_list, axis=1, sort=True)
 
     imp_df.columns = ['Original', 'Oversampled', 'SMOTE-NC', 'Clustered']
+
+    sns.set(style="ticks", font_scale=1.2, rc={'figure.figsize':(18, 11)})
 
     g = sns.clustermap(imp_df,  standard_scale=1, figsize=(8, 9))
 
@@ -1342,7 +1461,11 @@ if page == pages[6]:
 
 
 
-
+if page == pages[7]:
+    '''
+    Check out these resources
+    
+    '''
 
 
 
