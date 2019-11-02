@@ -507,7 +507,7 @@ if page == pages[1]:
 
                     st.pyplot()
 
-                    plt.cla()
+                    plt.clf()
 
                 st.success("Now, we are ready to do some exploratory visualizations with this dataset!")
 
@@ -577,6 +577,8 @@ if page == pages[2]:
             plt.tight_layout()
 
             st.pyplot()
+
+            plt.clf()
     elif var1 != ' ' and var2 == ' ' and df[var1].dtype != 'object':
         n_bins = st.slider("Number of bins",
                            min_value=10, max_value=50, value=10, step=2)
@@ -606,6 +608,8 @@ if page == pages[2]:
             plt.tight_layout()
 
             st.pyplot()
+
+            plt.clf()
     elif df[var1].dtype != 'object' and df[var2].dtype == 'object':
         n_bins = st.slider("Number of bins",
                            min_value=10, max_value=50, value=10, step=2)
@@ -630,6 +634,8 @@ if page == pages[2]:
             plt.tight_layout()
 
             st.pyplot()
+
+            plt.clf()
     elif df[var1].dtype != 'object' and df[var2].dtype != 'object' and var1 == var2:
         n_bins = st.slider("Number of bins",
                            min_value=10, max_value=50, value=10, step=2)
@@ -655,6 +661,8 @@ if page == pages[2]:
             plt.tight_layout()
 
             st.pyplot()
+
+            plt.clf()
 
     else:
         pass
@@ -782,18 +790,20 @@ if page == pages[4]:
     st.sidebar.markdown('''
     
     ---
+
+    
+    Feeling overwhelmed by all the new info coming your way?
+
+    No fear! Follow the checkboxes to run one code chunk at a time and progressively reveal new content!
+    
+    ---
     
     Want to learn more?
     
     - Eight approaches to handle imbalanced classes [[Machine Learning Mastery]](https://machinelearningmastery.com/tactics-to-combat-imbalanced-classes-in-your-machine-learning-dataset/)
     - A practical guide to oversampling algorithms [[`imbalance-learn` documentation]](https://imbalanced-learn.readthedocs.io/en/stable/over_sampling.html)
     
-    ---
-
     
-    Feeling overwhelmed by all the new info coming your way?
-
-    No fear! Follow the checkboxes to run one code chunk at a time and progressively reveal new content!
     
     
     ''')
@@ -855,6 +865,8 @@ if page == pages[4]:
 
         if st.checkbox("Visualize the datasets"):
             st.pyplot(width=900, height=800)
+
+            plt.clf()
 
             '''
             Immediately, we see that there are way fewer instances belonging to positive class ("Churn) than in the 
@@ -949,6 +961,8 @@ if page == pages[4]:
 
             st.pyplot(width=900, height=700)
 
+            plt.clf()
+
 
 
     if topic == "3. SMOTE-NC upsampling":
@@ -1017,6 +1031,8 @@ if page == pages[4]:
 
             st.pyplot(width=900, height=800)
 
+            plt.clf()
+
 
     if topic == "4. Create new classes by clustering":
         st.header('5.4 Unsupervised clustering')
@@ -1082,7 +1098,17 @@ if page == pages[4]:
             ```
             '''
 
-            st.error('plot opt_clusters.csv to show optimal number of clusters = 2')
+            opt_clust = pd.read_csv('./opt_clusters.csv')
+
+            v = pd.DataFrame(opt_clust)
+
+            v.columns = ['No. clusters', 'Value']
+
+            v.plot.line(x='No. clusters', y='Value')
+
+            st.pyplot()
+
+            plt.clf()
 
             '''
             ```R
@@ -1154,51 +1180,41 @@ if page == pages[4]:
                 ordered_df = final.sort_values(by='Diff')
                 my_range=range(1,len(final.index)+1)
 
+                plt.style.use('default')
+                plt.rcParams.update({'figure.figsize':[10, 8], 'font.size':18})
+
                 plt.hlines(y=my_range, xmin=ordered_df['Group 1'], xmax=ordered_df['Group 2'], color='grey', alpha=0.4)
                 plt.scatter(ordered_df['Group 1'], my_range, color='red', alpha=1, label='Group 1')
                 plt.scatter(ordered_df['Group 2'], my_range, color='green', alpha=1, label='Group 2')
-                plt.legend(loc='upper right', prop={'size': 12})
+                plt.legend(loc='upper right', prop={'size': 16})
 
                 # Add title and axis names
                 plt.yticks(my_range, ordered_df['Category'])
                 plt.xlabel('% of customers in group ')
 
-                plt.style.use('default')
-
-                plt.rcParams.update({'figure.figsize':[10, 8], 'font.size':16})
-
                 plt.tight_layout()
 
                 st.pyplot()
 
+                plt.clf()
+
                 n_bins = st.slider("Number of bins",
                                    min_value=10, max_value=50, value=10, step=2)
 
-                fig = px.histogram(df, x="MonthlyCharges", color="groups", opacity=0.4,
-                                   color_discrete_sequence = ['red', 'green'], barmode = 'overlay', nbins=n_bins)
+                for i in ['MonthlyCharges', 'Tenure', 'TotalCharges']:
+                    fig = px.histogram(df, x=i, color="groups", opacity=0.4,
+                                       color_discrete_sequence = ['red', 'green'], barmode = 'overlay', nbins=n_bins)
 
-                fig.update_layout(legend_orientation="h",
-                                  legend=dict(x=0, y=1.1),
-                                  yaxis=go.layout.YAxis(
-                                      title=go.layout.yaxis.Title(
-                                          text="Count"
-                                      )
-                                  ))
+                    fig.update_layout(legend_orientation="h",
+                                      legend=dict(x=0, y=1.1),
+                                      yaxis=go.layout.YAxis(
+                                          title=go.layout.yaxis.Title(
+                                              text="Count"
+                                          )
+                                      ))
 
-                fig2 = px.histogram(df, x="Tenure", color="groups", opacity=0.4,
-                                    color_discrete_sequence = ['red', 'green'], barmode = 'overlay', nbins=n_bins)
+                    st.plotly_chart(fig)
 
-                fig2.update_layout(legend_orientation="h",
-                                  legend=dict(x=0, y=1.1),
-                                  yaxis=go.layout.YAxis(
-                                      title=go.layout.yaxis.Title(
-                                          text="Count"
-                                      )
-                                  ))
-
-                st.plotly_chart(fig)
-
-                st.plotly_chart(fig2)
 
                 df['groups'] = df['groups'].astype('str')
 
@@ -1213,7 +1229,7 @@ if page == pages[4]:
 
                     numeric_list = ["Tenure", "MonthlyCharges", "TotalCharges"]
 
-                    df['groups'] = np.where(df['groups'] == '2', 0, 1)
+                    df['groups'] = np.where(df['groups'] == '1', 0, 1)
 
                     df[binary_list] = np.where(df[binary_list] == 'Yes', 1, 0 )
 
@@ -1263,6 +1279,8 @@ if page == pages[4]:
 
                     st.pyplot(width=900, height=800)
 
+                    plt.clf()
+
 
 
 if page == pages[5]:
@@ -1274,11 +1292,11 @@ if page == pages[5]:
     
     Want to learn more?
     
-    - Evaluating Machine Learning Models [[Alice Zheng]](https://www.oreilly.com/ideas/evaluating-machine-learning-models/page/5/hyperparameter-tuning)
+    - Evaluating machine learning modes - hyperparameter tuning [[Alice Zheng]](https://www.oreilly.com/ideas/evaluating-machine-learning-models/page/5/hyperparameter-tuning)
     
     ''')
 
-    st.header("Hyperparameter tuning")
+    st.header("6.1 Hyperparameter tuning")
 
     '''
     Finding the optimal (to a degree) set of model hyperparameter settings for a particular dataset is key to getting
@@ -1311,7 +1329,7 @@ if page == pages[5]:
                   "bootstrap": [True, False],
                   "criterion": ["gini", "entropy"]}
     
-     # build a classifier
+    # build a classifier
     clf = RandomForestClassifier()
 
     # run randomized search
@@ -1320,29 +1338,53 @@ if page == pages[5]:
                                        n_iter=20, 
                                        cv=5, 
                                        iid=False)
+                                       
+    random_search.fit(X_train, y_train)
+
+    ## Get values
+    mean_test_score, std_test_score, params_list = report(random_search.cv_results_, n_top=1)
+    
+    bootstrap, class_weight, criterion, max_depth, max_features, min_samples_split, n_estimators = params_list.values()
 
     ```
     '''
 
 
     if st.checkbox("Tune parameters"):
+        infile = open('./para_df.pickle','rb')
 
+        para_df = pickle.load(infile)
 
-        st.dataframe(param_search().T)
+        st.dataframe(para_df.T)
 
-        st.header("Train models")
+        st.header("6.2 Train models")
 
         '''
         ```Python
-        Code
+        ## Define function for calculating scores
+        def score(m):
+            res = {"Score on training set" : m.score(X_train, y_train),
+                   "Score on validation set" : m.score(X_val, y_val)}
+            return res
+        
+        ## Create model object with parameters from random search
+        m = RandomForestClassifier(**params_list)
+
+        ## Fit model to training set
+        m.fit(X_train, y_train)
+    
+        ## Calculate score    
+        score(m)
         ```
         '''
 
         if st.checkbox("Check scores:"):
             with st.spinner("Hang on tight, this takes a bit..."):
-                scores = train_models()
+                infile = open('./scores_df.pickle', 'rb')
 
-                scores.plot.barh(figsize=(8, 6))
+                scores = pickle.load(infile)
+
+                scores.plot.barh(figsize=(8, 6), fontsize=14)
 
                 plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=3, fontsize=12)
 
@@ -1352,6 +1394,12 @@ if page == pages[5]:
 
                 plt.clf()
 
+
+                st.header("6.3 Evaluate model performance")
+
+                '''
+                Confusion matrix
+                '''
 
                 if st.checkbox("Plot confusion matrix"):
                     infile = open('./cmatrix_dict.pickle', 'rb')
@@ -1363,10 +1411,19 @@ if page == pages[5]:
                     fig = plt.figure()
                     fig.subplots_adjust(hspace=0.3, wspace=0.3)
 
+                    sns.set(font_scale = 1.5)
+
                     for i, c in zip(range(1, 5), names):
                         ax = fig.add_subplot(2, 2, i)
-                        sns.heatmap(cmatrix_dict[c], annot=True, ax=ax, annot_kws={"size": 20}, fmt='d', cbar=False)
-                        ax.set_title(c, fontsize=26)
+                        sns.heatmap(cmatrix_dict[c], annot=True, ax=ax, annot_kws={"size": 18}, fmt='d', cbar=False,
+                                    vmin=0, vmax=600)
+                        ax.set_title(c, fontsize=22)
+                        if i !=4 :
+                            ax.set_xticklabels(['No Churn', 'Churn'])
+                            ax.set_yticklabels(['No Churn', 'Churn'], va="center")
+                        else:
+                            ax.set_xticklabels(['Group 1', 'Group 2'])
+                            ax.set_yticklabels(['Group 1', 'Group 2'], va="center")
 
                     plt.tight_layout()
 
@@ -1375,6 +1432,9 @@ if page == pages[5]:
                     plt.clf()
 
 
+                    '''
+                    Classification report
+                    '''
 
                     if st.checkbox("Check classification report"):
                         infile = open('./crep_dict.pickle', 'rb')
@@ -1386,14 +1446,21 @@ if page == pages[5]:
                         fig = plt.figure()
                         fig.subplots_adjust(hspace=0.4, wspace=0.4)
 
-                        sns.set(font_scale = 2)
+                        sns.set(font_scale = 1.5)
 
                         for i, c in zip(range(1, 5), names):
                             df = pd.DataFrame(crep_dict[c]).T.iloc[:2]
                             ax = fig.add_subplot(2, 2, i)
 
-                            sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 20},  cmap="YlGnBu", cbar=False, vmin=0, vmax=1)
+                            sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 22},
+                                        cmap="YlGnBu", cbar=False, vmin=0, vmax=1)
+
                             ax.set_title(c, fontsize=26)
+
+                            if i == 4:
+                                ax.set_yticklabels(['Group 1', 'Group2'], va="center")
+                            else:
+                                ax.set_yticklabels(['No churn', 'Churn'], va="center")
 
 
                         plt.tight_layout()
@@ -1423,10 +1490,7 @@ if page == pages[6]:
 
     '''
     ```Python
-    m = RandomForestClassifier(n_estimators=500,
-                               min_samples_leaf=params['min_samples_leaf'],
-                               max_features=params['max_features'],
-                               n_jobs=-1, oob_score=True)
+    m = RandomForestClassifier(**params_list)
 
     m.fit(X_train, y_train)
 
@@ -1458,6 +1522,7 @@ if page == pages[6]:
 
     st.pyplot(width=900, height=900)
 
+    plt.clf()
 
 
 
