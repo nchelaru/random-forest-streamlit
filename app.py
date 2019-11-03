@@ -19,6 +19,10 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.ensemble import forest
 from rfpimp import *
 from functools import reduce
+from sklearn.datasets import *
+from sklearn import tree
+from dtreeviz.trees import *
+
 
 
 # Set outline
@@ -27,7 +31,7 @@ pages = ["1. Introduction",
          "3. Explore the dataset",
          "4. Variable encoding",
          "5. Create training, validation and test sets",
-         "6. Parameter tuning and model fitting",
+         "6. Hyperparameter tuning and model fitting",
          "7. Feature importance",
          "8. Where to go from here?"]
 
@@ -829,26 +833,19 @@ if page == pages[4]:
             df = df.sample(frac=1, replace=False, random_state=1)
 
             ## 80/20 split into training and testing sets, stratified by the target variable
-            X_train, X_testing, y_train, y_testing = train_test_split(df.drop(['Churn'], axis=1),
+            X_train, X_val, y_train, y_val = train_test_split(df.drop(['Churn'], axis=1),
                                                                       df['Churn'],
                                                                       test_size = 0.2,
                                                                       stratify=df['Churn'])
 
-            ## Just in case it's needed later, also split testing set into test and validation sets
-            X_test, X_val, y_test, y_val = train_test_split(X_testing,
-                                                            y_testing,
-                                                            test_size = 0.4,
-                                                            stratify= y_testing)
 
             ## Pickle the datasets for later use
             with open('./telco_split_sets.pickle', 'wb') as f:
-                pickle.dump([X_train, y_train, X_test, y_test, X_val, y_val], f)
-
+                pickle.dump([X_train, y_train, X_val, y_val], f)
 
 
         data = {'Training (negative class)': y_train.value_counts()[0],
                 'Training (positive class)': y_train.value_counts()[1],
-                'Test': X_test.shape[0],
                 'Validation':X_val.shape[0]}
 
         fig = plt.figure(
@@ -856,7 +853,7 @@ if page == pages[4]:
             rows=7,
             columns=10,
             values=data,
-            legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.03), "fontsize":16, 'ncol':2},
+            legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.03), "fontsize":13, 'ncol':3},
             icons='user',
             font_size=22,
             icon_legend=True,
@@ -870,7 +867,7 @@ if page == pages[4]:
 
             '''
             Immediately, we see that there are way fewer instances belonging to positive class ("Churn) than in the 
-            negative class ("No churn"). This is because only about a third of the ~7,000c customers have churned. This class imbalance 
+            negative class ("No churn"). This is because only about a third of the ~7,000 customers have churned. This class imbalance 
             is a common problem that would negatively impact the performance of the model, as it simply do not have enough instances of 
             "Churn" to learn from. 
             
@@ -893,53 +890,49 @@ if page == pages[4]:
 
         For a demonstration of what happens if the data set is upsampled before the train-test split, please see a post 
         by Nick Becker [here](https://beckernick.github.io/oversampling-modeling/).
- 
-        ```Python
-        ## Import libraries
-        from imblearn.over_sampling import RandomOverSampler
-
-        ## Import data
-        infile = open('./telco_split_sets.pickle','rb')
-
-        X_train, y_train, X_test, y_test, X_val, y_val = pickle.load(infile)
-
-        ## Naive upsample
-        ros = RandomOverSampler(random_state=0)
-        X_ros, y_ros = ros.fit_resample(X_train, y_train)
-
-        ## Rename upsampled dataset with original column names
-        X_ros = pd.DataFrame(X_ros)
-
-        X_ros.columns = X_train.columns
-
-        ## Reset numerical column data types
-        num_list = ['Tenure', 'MonthlyCharges', 'TotalCharges']
-
-        for col in num_list:
-            X_ros[col] = X_ros[col].astype('float64')
-
-        with open('./random_split_sets.pickle', 'wb') as f:
-            pickle.dump([X_ros, y_ros, X_test, y_test, X_val, y_val], f)
-        ```
         '''
 
-        infile = open('./random_split_sets.pickle','rb')
+        with st.echo():
+            ## Import libraries
+            from imblearn.over_sampling import RandomOverSampler
 
-        X_ros, y_ros, X_test, y_test, X_val, y_val = pickle.load(infile)
+            ## Import data
+            infile = open('./telco_split_sets.pickle','rb')
+
+            X_train, y_train, X_val, y_val = pickle.load(infile)
+
+            ## Naive upsample
+            ros = RandomOverSampler(random_state=0)
+            X_ros, y_ros = ros.fit_resample(X_train, y_train)
+
+            ## Rename upsampled dataset with original column names
+            X_ros = pd.DataFrame(X_ros)
+
+            X_ros.columns = X_train.columns
+
+            ## Reset numerical column data types
+            num_list = ['Tenure', 'MonthlyCharges', 'TotalCharges']
+
+            for col in num_list:
+                X_ros[col] = X_ros[col].astype('float64')
+
+        with open('./random_split_sets.pickle', 'wb') as f:
+            pickle.dump([X_ros, y_ros, X_val, y_val], f)
+
 
         x = pd.DataFrame(y_ros)[0].value_counts()
 
         data = {'Training (positive class)' : x[0],
                 'Training (negative class)' : x[1],
-                'Test' : X_test.shape[0],
                 'Validation' : X_val.shape[0]}
+
 
         fig = plt.figure(
             FigureClass=Waffle,
             rows=6,
             columns=13,
             values=data,
-            legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.15), "fontsize":16, 'ncol':2},
+            legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.15), "fontsize":13, 'ncol':3},
             icons='user',
             font_size=22,
             icon_legend=True,
@@ -973,39 +966,34 @@ if page == pages[4]:
         of instances in the minority class. SMOTE-NC is an extension of the method for 
         use with datasets that contain both categorical and continuous variables, like the Telco customer churn dataset.
         
-        ```Python
-        ## Import library
-        from imblearn.over_sampling import SMOTENC
+        '''
 
-        ## Import data
-        infile = open('./telco_split_sets.pickle','rb')
+        with st.echo():
+            ## Import library
+            from imblearn.over_sampling import SMOTENC
 
-        X_train, y_train, X_test, y_test, X_val, y_val = pickle.load(infile)
+            ## Import data
+            infile = open('./telco_split_sets.pickle','rb')
 
-        ## I have reordered the columns so that the three continuous
-        ## variables are in the first three positions
-        cat_range = range(3, 27)
+            X_train, y_train, X_val, y_val = pickle.load(infile)
 
-        ## Upsampling using SMOTE-NC
-        smote_nc = SMOTENC(categorical_features=cat_range, random_state=0)
+            ## I have reordered the columns so that the three continuous
+            ## variables are in the first three positions
+            cat_range = range(3, 27)
 
-        X_resampled, y_resampled = smote_nc.fit_resample(X_train, y_train)
+            ## Upsampling using SMOTE-NC
+            smote_nc = SMOTENC(categorical_features=cat_range, random_state=0)
+
+            X_resampled, y_resampled = smote_nc.fit_resample(X_train, y_train)
 
         ## Save for future use
         with open('./smote_split_sets.pickle', 'wb') as f:
-            pickle.dump([X_resampled, y_resampled, X_test, y_test, X_val, y_val], f)
-        ```
-        '''
-
-        infile = open('./smote_split_sets.pickle','rb')
-
-        X_resampled, y_resampled, X_test, y_test, X_val, y_val = pickle.load(infile)
+            pickle.dump([X_resampled, y_resampled, X_val, y_val], f)
 
         x = pd.DataFrame(y_resampled)[0].value_counts()
 
         data = {'Training (positive class)' : x[0],
                 'Training (negative class)' : x[1],
-                'Test' : X_test.shape[0],
                 'Validation' : X_val.shape[0]}
 
         fig = plt.figure(
@@ -1013,7 +1001,7 @@ if page == pages[4]:
             rows=6,
             columns=13,
             values=data,
-            legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.15), "fontsize":16, 'ncol':2},
+            legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.15), "fontsize":13, 'ncol':3},
             icons='user',
             font_size=22,
             icon_legend=True,
@@ -1111,6 +1099,8 @@ if page == pages[4]:
             plt.clf()
 
             '''
+            This shows that the data can be grouped most optimally in two clusters. Let's look at these two groups as hierarchical clusters:
+             
             ```R
             ## Hierarchically cluster based on calculated distance
             fit <- hclust(d=gower_dist, method="complete")  
@@ -1136,6 +1126,26 @@ if page == pages[4]:
             ''')
 
             if st.checkbox("Compare these two groups"):
+                famd_clust = pd.read_csv('./famd_clust.csv')
+
+                famd_clust['groups'] = famd_clust['groups'].astype(str)
+
+                fig = px.scatter_3d(famd_clust, x='coord.Dim.1', y='coord.Dim.2', z='coord.Dim.3',
+                                    color='groups')
+
+                fig.for_each_trace(lambda t: t.update(name=t.name.replace("Churn=","")))
+
+                fig.update_traces(marker=dict(size=3, opacity=0.5))
+
+                st.plotly_chart(fig, width=800, height=600)
+
+                '''
+                In comparison to "Churn"/"No churn", customers appear to be much more linearly separable by membership in these two groups, suggesting 
+                this alternative approach to be a potentially viable one.
+                
+                Let's see how these two groups of customers differ by their characteristics:
+                '''
+
                 ## Reformat columns to contain column name
                 col_list = ['SeniorCitizen', 'Partner', 'Dependents','PhoneService', 'DeviceProtection', 'MultipleLines', 'OnlineSecurity',
                             'OnlineBackup', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'PaperlessBilling', 'Churn']
@@ -1198,6 +1208,14 @@ if page == pages[4]:
 
                 plt.clf()
 
+                '''
+                So these two groups do differ in terms of churn, with ~15% of customers in "Group 1" and ~40% in "Group 2" leaving the company. Given the 
+                differences in some of their personal characteristics and purchasing behaviours that have been associated with different tendencies to churn in 
+                previous analyses, like paying by "Electronic check" [sic] and purchasing "Fiber optic" internet, this group membership may be a useful one to predict, 
+                in an attempt to separate the "loyal customers" from those who are more likely to be on the fence. While this is not as clear cut a distinction as "Churn"/"No churn", 
+                better classification results may actually be better for the company to target the right populations of customers for marketing/retention campaigns.
+                '''
+
                 n_bins = st.slider("Number of bins",
                                    min_value=10, max_value=50, value=10, step=2)
 
@@ -1219,6 +1237,10 @@ if page == pages[4]:
                 df['groups'] = df['groups'].astype('str')
 
                 df.drop('Churn', axis=1, inplace=True)
+
+                '''
+                Finally, we will do the same train-test split to get this dataset ready for modelling:
+                '''
 
                 with st.echo():
                     binary_list = ["SeniorCitizen", "Partner", "Dependents", "PhoneService", "MultipleLines",
@@ -1246,31 +1268,24 @@ if page == pages[4]:
                         df = df.sample(frac=1, replace=False, random_state=1)
 
                         ## 80/20 split into training and testing sets, stratified by the target variable
-                        X_train, X_testing, y_train, y_testing = train_test_split(df.drop(['groups'], axis=1),
+                        X_train, X_val, y_train, y_val = train_test_split(df.drop(['groups'], axis=1),
                                                                                   df['groups'],
                                                                                   test_size = 0.2,
                                                                                   stratify=df['groups'])
 
-                        ## Just in case it's needed later, also split testing set into test and validation sets
-                        X_test, X_val, y_test, y_val = train_test_split(X_testing,
-                                                                        y_testing,
-                                                                        test_size = 0.4,
-                                                                        stratify= y_testing)
-
-
-
                     with open('./cluster_split_sets.pickle', 'wb') as f:
-                        pickle.dump([X_train, y_train, X_test, y_test, X_val, y_val], f)
+                        pickle.dump([X_train, y_train, X_val, y_val], f)
 
-                    data = {'Training (negative class)': y_train.value_counts()[0], 'Training (positive class)': y_train.value_counts()[1],
-                            'Test': X_test.shape[0], 'Validation':X_val.shape[0]}
+                    data = {'Training (negative class)': y_train.value_counts()[0],
+                            'Training (positive class)': y_train.value_counts()[1],
+                            'Validation':X_val.shape[0]}
 
                     fig = plt.figure(
                         FigureClass=Waffle,
                         rows=7,
                         columns=10,
                         values=data,
-                        legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.03), "fontsize":14, 'ncol':2},
+                        legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.03), "fontsize":13, 'ncol':3},
                         icons='user',
                         font_size=22,
                         icon_legend=True,
@@ -1284,21 +1299,30 @@ if page == pages[4]:
 
 
 if page == pages[5]:
-    st.title("6. Parameter tuning and model fitting")
+    st.title("6. Hyperparameter tuning and model fitting")
 
     st.sidebar.markdown('''
     
     ---
     
+    Feeling overwhelmed by all the new info coming your way?
+
+    No fear! Follow the checkboxes to run one code chunk at a time and progressively reveal new content!
+    
+    ---
+    
+    
     Want to learn more?
     
     - Evaluating machine learning modes - hyperparameter tuning [[Alice Zheng]](https://www.oreilly.com/ideas/evaluating-machine-learning-models/page/5/hyperparameter-tuning)
-    
+    - Confusion matrix [[Machine Learning Mastery]](https://machinelearningmastery.com/confusion-matrix-machine-learning/)
+    - Classification report   [[`yellowbrick` documentation]](https://www.scikit-yb.org/en/latest/api/classifier/classification_report.html)
+    - Precision-Recall   [[`scikit-learn` documentation]](https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html)
     ''')
 
-    st.header("6.1 Hyperparameter tuning")
-
     '''
+    ## 6.1 Hyperparameter tuning
+    
     Finding the optimal (to a degree) set of model hyperparameter settings for a particular dataset is key to getting
      the best prediction accuracy out of it. This is done by searching through a predefined hyperparameter space ("grid") for the 
      combination that achieves the best performance. Two most commonly used approaches are grid search and random search, where the former 
@@ -1308,10 +1332,9 @@ if page == pages[5]:
      this method here:
     
     ```Python
+    ## Import libraries
     from sklearn.model_selection import RandomizedSearchCV
-    from sklearn.datasets import load_digits
     from sklearn.ensemble import RandomForestClassifier
-
 
     # Utility function to report best scores
     def report(results, n_top=1):
@@ -1329,10 +1352,10 @@ if page == pages[5]:
                   "bootstrap": [True, False],
                   "criterion": ["gini", "entropy"]}
     
-    # build a classifier
+    # Instantiate a random forest classifier
     clf = RandomForestClassifier()
 
-    # run randomized search
+    # Randomized search
     random_search = RandomizedSearchCV(clf, 
                                        param_distributions=param_dist, 
                                        n_iter=20, 
@@ -1341,7 +1364,7 @@ if page == pages[5]:
                                        
     random_search.fit(X_train, y_train)
 
-    ## Get values
+    ## Get parameters
     mean_test_score, std_test_score, params_list = report(random_search.cv_results_, n_top=1)
     
     bootstrap, class_weight, criterion, max_depth, max_features, min_samples_split, n_estimators = params_list.values()
@@ -1351,15 +1374,28 @@ if page == pages[5]:
 
 
     if st.checkbox("Tune parameters"):
+        '''
+        We performed random search in the parameter grid specified for all four of the datasets that we have, getting a 
+        set of parameters for each that we will be using to train the model below.
+  
+        '''
+
         infile = open('./para_df.pickle','rb')
 
         para_df = pickle.load(infile)
 
         st.dataframe(para_df.T)
 
-        st.header("6.2 Train models")
-
         '''
+        ## 6.2 Train models
+        
+        For each of the four datasets, we will first fit the `RandomForestClassifier` object on the training set, with the corresponding 
+        hyperparameters found above (`params_list`) to the training set. Then, to evaluate performance of the fitted model, it will be 
+        used to make predictions on the validation set. The `score` calculated here is the classification accuracy of the model
+         on a given dataset averaged across the two classes:
+         
+         classification accuracy = correct predictions / total predictions
+        
         ```Python
         ## Define function for calculating scores
         def score(m):
@@ -1378,8 +1414,8 @@ if page == pages[5]:
         ```
         '''
 
-        if st.checkbox("Check scores:"):
-            with st.spinner("Hang on tight, this takes a bit..."):
+        if st.checkbox("Fit and evaluate the model:"):
+            with st.spinner("Working on it..."):
                 infile = open('./scores_df.pickle', 'rb')
 
                 scores = pickle.load(infile)
@@ -1395,13 +1431,17 @@ if page == pages[5]:
                 plt.clf()
 
 
-                st.header("6.3 Evaluate model performance")
-
                 '''
-                Confusion matrix
+                ## 6.3 Evaluate model performance
+                
+                ### 6.3.1 Confusion matrix
+                
+                What classification accuracy does not tell us is how well the model makes predictions for each of the two classes. This is particularly
+                 problematic since the "Churn"/"No churn" classes are very imbalanced in our validation set. This is where the confusion matrix comes to the rescue, 
+                 providing actual numbers of correct and incorrect predictions made for each class:
                 '''
 
-                if st.checkbox("Plot confusion matrix"):
+                if st.checkbox("Plot confusion matrices"):
                     infile = open('./cmatrix_dict.pickle', 'rb')
 
                     cmatrix_dict = pickle.load(infile)
@@ -1409,7 +1449,7 @@ if page == pages[5]:
                     names = ['Original', 'Random', 'SMOTE', 'Clusters']
 
                     fig = plt.figure()
-                    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+                    fig.subplots_adjust(hspace=0.4, wspace=0.3)
 
                     sns.set(font_scale = 1.5)
 
@@ -1419,11 +1459,11 @@ if page == pages[5]:
                                     vmin=0, vmax=600)
                         ax.set_title(c, fontsize=22)
                         if i !=4 :
-                            ax.set_xticklabels(['No Churn', 'Churn'])
-                            ax.set_yticklabels(['No Churn', 'Churn'], va="center")
+                            ax.set_xticklabels(['No Churn (predicted)', 'Churn (predicted)'])
+                            ax.set_yticklabels(['No Churn (actual)', 'Churn (actual)'], va="center")
                         else:
-                            ax.set_xticklabels(['Group 1', 'Group 2'])
-                            ax.set_yticklabels(['Group 1', 'Group 2'], va="center")
+                            ax.set_xticklabels(['Group 1 (predicted)', 'Group 2 (predicted)'])
+                            ax.set_yticklabels(['Group 1 (actual)', 'Group 2 (actual)'], va="center")
 
                     plt.tight_layout()
 
@@ -1431,12 +1471,32 @@ if page == pages[5]:
 
                     plt.clf()
 
+                    '''
+                    A model that makes more correct predictions than not in both classes will have higher numbers of instances 
+                    in the diagonal going from the upper left to the bottom right. The model predicting membership of the two groups
+                    identified using unsupervised clustering appears to be the highest performing model out of the four, with the other three
+                    tending to produce false positives for "Churn" (upper right quadrant), particularly with the two models trained on upsampled 
+                    training sets.
+                    '''
 
                     '''
-                    Classification report
+                    ### 6.3.2 Classification report
+                    
+                    The classification report calculates several metrics from the raw data in the confusion matrix, 
+                    making it easier to compare performance between models:
+                    
+                    - Precision
+                    > What percentage of positive predictions made by the model were actually correct?
+                    
+                    - Recall
+                    > What percentage of positive instances were correctly predicted by the model?
+                    
+                    - f1 score
+                    > A weighted harmonic mean of precision and recall, with 0 being the worst, 1 being the best
+                    
                     '''
 
-                    if st.checkbox("Check classification report"):
+                    if st.checkbox("Check classification reports"):
                         infile = open('./crep_dict.pickle', 'rb')
 
                         crep_dict = pickle.load(infile)
@@ -1449,7 +1509,7 @@ if page == pages[5]:
                         sns.set(font_scale = 1.5)
 
                         for i, c in zip(range(1, 5), names):
-                            df = pd.DataFrame(crep_dict[c]).T.iloc[:2]
+                            df = pd.DataFrame(crep_dict[c]).T
                             ax = fig.add_subplot(2, 2, i)
 
                             sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 22},
@@ -1458,9 +1518,9 @@ if page == pages[5]:
                             ax.set_title(c, fontsize=26)
 
                             if i == 4:
-                                ax.set_yticklabels(['Group 1', 'Group2'], va="center")
+                                ax.set_yticklabels(['Group 1', 'Group2', 'Accuracy', 'Macro avg', 'Weighted avg'], va="center")
                             else:
-                                ax.set_yticklabels(['No churn', 'Churn'], va="center")
+                                ax.set_yticklabels(['No churn', 'Churn', 'Accuracy', 'Macro avg', 'Weighted avg'], va="center")
 
 
                         plt.tight_layout()
@@ -1469,31 +1529,71 @@ if page == pages[5]:
 
                         plt.clf()
 
-
-
+                        '''
+                        Rule of thumb for interpreting classification reports:
+                        - A model with high precision but low recall tends to produce **false negatives**
+                        - A model with low precision but hight recall tends to produce **false positives**
+                        - The weighted average of f1 score should be used to compare classifier models
+                        
+                        As we are more interested in predicting churn, let's look at the performance of each model on that class (second row of each heatmap). 
+                        We can see that the model trained on the imbalanced training set tends to produce false negatives, namely failing to identify customers who churn. 
+                        The two models trained on the upsampled datasets show the opposite, prone to false positives, potentially due to the artificial inflation of the 
+                        "Churn" class. This can be a trade-off when used in real-world applications, depending on whether failing to prevent customer churn or enacting unnecessary 
+                        customer retention measures is more costly for the company. Judging by the f1 scores, which take into account both the precision and recall, 
+                        the model trained on the original imbalanced dataset performs just as well as these two models.
+                        
+                        Finally, the model trained to predict membership in the two groups identified by unsupervised clustering appear to perform the best. Recall ~15% of
+                         customers in "Group 1" have churned as compared to ~40% of customers in "Group 2". Therefore, when it comes to making predictions on new customers, 
+                         it may be more fruitful to try to predict whether they are **more or less likely** to churn, trading the certainty of a definite label 
+                         for more robust predictions.
+                        '''
 
 
 
 if page == pages[6]:
+    st.title("7. Calculate feature importance")
+
     st.sidebar.markdown('''
     
     ---
+    
+    Feeling overwhelmed by all the new info coming your way?
 
+    No fear! Follow the checkboxes to run one code chunk at a time and progressively reveal new content!
     
-    Want to learn more about model interpretability?
+    ---
     
-    - Interpretable Machine Learning - A Guide for Making Black Box Models Explainable 
-    [[Christoph Molnar]](https://christophm.github.io/interpretable-ml-book/)
-    - Permutation feature importance for random forest models [[fast.ai]](https://explained.ai/rf-importance/)
+    Want to learn more about permutation feature importance?
+    
+    - Interpretable Machine Learning [[Christopher Molnar]](https://christophm.github.io/interpretable-ml-book/)
+    - Permutation feature importance for random forest models [[explained.ai]](https://explained.ai/rf-importance/)
     
     ''')
 
     '''
+    Arguably the most exciting part of machine learning is exploring
+    the "decision making process" of the model. Understanding the relative importance that the model attributes to various variables not
+    only provides insights into novel relationships in the data, it also allows real-world domain knowledge to enter the picture and 
+    check the validity of the predictions made. The many perils of treating machine learning models as black boxes are garnering growing attention 
+    as we grow to rely on them in all aspects of our lives. For a great introduction to the topic, check out the ebook by Christopher Molnar as linked in the sidebar. 
+    
+    One reasonably efficient and reliable technique for calculating feature importance for all models is **permutation importance**, which directly measures
+    variable importance by observing the effect of scrambling the values of each predictor variable on model accuracy. Note that variables with *negative*
+     feature importance as calculated here means that removing them will improve model performance. 
+    
+     
     ```Python
+    ## Import libraries
+    from sklearn.ensemble import RandomForestClassifier
+    from rfpimp import *
+    
+    ## Instantiate model
     m = RandomForestClassifier(**params_list)
 
+    ## Fit model to training set
     m.fit(X_train, y_train)
 
+    ## Calculate permutation feature importance on test set
     imp = importances(m, X_test, y_test, n_samples=-1)
     ```
     '''
@@ -1502,33 +1602,104 @@ if page == pages[6]:
     infile = open('./imp_dict.pickle', 'rb')
     imp_dict = pickle.load(infile)
 
-    imp_list = []
+    if st.checkbox("Calculate permutation feature importance"):
+        '''
+        First, we compare the permutated feature importance calculated for each of the three models trained to predict "Churn"/"No churn".
+        Interestingly, the three models are fairly consistent in treating `InternetService_Fiber optic` and `InternetService_No` as 
+        the most important features for prediction, and `Contract_Two year` and `TotalCharges` as the least. 
+        
+        Taking into account my earlier analyses of this dataset using approaches like [factor analysis of mixed data (FAMD)](http://rpubs.com/nchelaru/famd), 
+        [association rule mining](https://nancy-chelaru-centea.shinyapps.io/association_rule_mining) and [survival analysis](https://survival-analysis.herokuapp.com/), 
+        purchasing fiber optic internet service indeed is associated with leaving the company. It is also understandable that `TotalCharges` is not needed as a predictor variable 
+        when building the classifier, as it is the product of `MonthlyCharges` and `Tenure`, so its information is redundant. What is surprising is `Contract_Two year` being deemed
+        a variable that should be dropped, as it is shown to be a characteristic of "loyal" customers in the other analyses. It is possible that in dummy encoding the `Contract` variable, 
+        a customer can be interpreted as having a two-year contract if he/she is negative for `Contract_Month-to-month` and `Contract_One year`. It appears to be debatable whether a "reference"
+        column should be dropped, like `Contract_Two year`, when dummy encoding, so for the sake of demonstration I have opted to leave it in for this example.
+        '''
 
-    for i in ['Original', 'Random', 'SMOTE', 'Clusters']:
-        df = imp_dict[i]
-        imp_list.append(df)
+        imp_list = []
 
-    imp_df = pd.concat(imp_list, axis=1, sort=True)
+        for i in ['Original', 'Random', 'SMOTE']:
+            df = imp_dict[i]
+            imp_list.append(df)
 
-    imp_df.columns = ['Original', 'Oversampled', 'SMOTE-NC', 'Clustered']
+        imp_df = pd.concat(imp_list, axis=1, sort=True)
 
-    sns.set(style="ticks", font_scale=1.2, rc={'figure.figsize':(18, 11)})
+        imp_df.columns = ['Original', 'Oversampled', 'SMOTE-NC']
 
-    g = sns.clustermap(imp_df,  standard_scale=1, figsize=(8, 9))
+        imp_df = imp_df.sort_values(by='Original')
 
-    plt.setp(g.ax_heatmap.xaxis.get_majorticklabels(), rotation=90)
+        imp_df['Mean'] = imp_df.mean(axis=1)
 
-    plt.subplots_adjust(left=0.05, right=0.54, top=0.98, bottom=0.2)
+        imp_df = imp_df.sort_values(by='Mean')
 
-    st.pyplot(width=900, height=900)
+        plt.rcParams.update({'figure.figsize':[12, 12], 'font.size':14})
 
-    plt.clf()
+        imp_df.drop('Mean', axis=1).plot.barh()
+
+        plt.subplots_adjust(left=0.15, right=0.16,)
+
+        plt.tight_layout()
+
+        st.pyplot(width=900, height=900)
+
+        plt.clf()
+
+        '''
+        As for the model trained to predict membership in the two groups ("more likely to churn" and "less likely to churn") identified by 
+        unsupervised clustering, it also ranked `InternetService_Fiber optic` as the most important feature for prediction. This is consistent 
+        with our earlier comparison of customer characteristics in these two groups, showing that the two groups differ *the most* in the percentage 
+        of customers who have purchased fiber optic internet.  
+        '''
+
+        imp_dict['Clusters'].sort_values(by='Clusters').plot.barh()
+
+        plt.subplots_adjust(left=0.15, right=0.16,)
+
+        plt.tight_layout()
+
+        st.pyplot(width=900, height=900)
+
+        plt.clf()
+
+        '''
+        We can see that these four models provide both corroborating and differing results when it comes to feature importance. 
+        It is important to examine them together, as approach a data science problem from multiple angles and aggregating 
+        the results are key to gaining nuanced and robust insights to the data.  
+        '''
 
 
 
 if page == pages[7]:
+
+    st.balloons()
+
+    st.sidebar.markdown(
     '''
-    Check out these resources
+    ---
+    
+    For other data science/web development projects that I've cooked up, head over to my portfolio at http://nancychelaru.rbind.io/portfolio/ .
+    '''
+    )
+
+
+    '''
+    # 8. Where to go from here?
+    
+    Congratulations on finishing this long journey with me!
+    
+    Hopefully at this point, you are a bit more familiar with the machine learning workflow. The steps shown here are by no means exhaustive, and are
+    fairly simplified for demonstration purposes. 
+    
+    The material presented here are a summary of my own learning so far, much of which have been done using these fantastic resources:
+    
+    - The very popular [fast.ai](https://www.fast.ai/) courses on machine learning and deep learning
+    - [Machine Learning Mastery](https://machinelearningmastery.com/), a wealth of gentle yet detailed machine learning tutorials and resources created by Jason Brownlee, PhD
+    - [Real-World Machine Learning](https://www.manning.com/books/real-world-machine-learning) by Henrik Brink, Joseph W. Richards, and Mark Fetherolf
+    
+    I will update (and correct) the contents on this site as I continue to explore this ever expanding field, so please check back once in a while!
+    
+    Hope you have enjoyed your stay! :)
     
     '''
 
