@@ -1196,7 +1196,7 @@ if page == pages[4]:
                 my_range=range(1,len(final.index)+1)
 
                 plt.style.use('default')
-                plt.rcParams.update({'figure.figsize':[10, 8], 'font.size':18})
+                plt.rcParams.update({'figure.figsize':[10, 8], 'font.size':15})
 
                 plt.hlines(y=my_range, xmin=ordered_df['Group 1'], xmax=ordered_df['Group 2'], color='grey', alpha=0.4)
                 plt.scatter(ordered_df['Group 1'], my_range, color='red', alpha=1, label='Group 1')
@@ -1435,6 +1435,12 @@ if page == pages[5]:
 
                 plt.clf()
 
+                '''
+                Judging by the scores, the two models trained on upsampled training sets show some degrees of overfitting, as 
+                seen by lower classification accuracy on the validation set than on the training set. The model trained to 
+                predict grouping identified by the unsupervised clustering show the best performance (>90% accuracy) and
+                 least overfitting.
+                '''
 
                 '''
                 ## 6.3 Evaluate model performance
@@ -1456,7 +1462,7 @@ if page == pages[5]:
                     fig = plt.figure()
                     fig.subplots_adjust(hspace=0.4, wspace=0.3)
 
-                    sns.set(font_scale = 1.5)
+                    sns.set(font_scale = 1.3)
 
                     for i, c in zip(range(1, 5), names):
                         ax = fig.add_subplot(2, 2, i)
@@ -1517,7 +1523,7 @@ if page == pages[5]:
                             df = pd.DataFrame(crep_dict[c]).T
                             ax = fig.add_subplot(2, 2, i)
 
-                            sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 22},
+                            sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 18},
                                         cmap="YlGnBu", cbar=False, vmin=0, vmax=1)
 
                             ax.set_title(c, fontsize=26)
