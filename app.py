@@ -560,7 +560,7 @@ if page == pages[2]:
             st.plotly_chart(fig, width=700, height=700)
     elif var1 != ' ' and var2 == ' ' and df[var1].dtype == 'object':
         '''
-        There are 7,032 customers in the dataset. Each symbol represents ~100 customers.
+        There are 7,043 customers in the dataset. Each symbol represents ~100 customers.
         '''
 
         with st.spinner('Working on it...'):
@@ -968,27 +968,32 @@ if page == pages[4]:
         
         '''
 
-        with st.echo():
-            ## Import library
-            from imblearn.over_sampling import SMOTENC
+        '''
+        ```Python
+        ## Import library
+        from imblearn.over_sampling import SMOTENC
 
-            ## Import data
-            infile = open('./telco_split_sets.pickle','rb')
+        ## Import data
+        infile = open('./telco_split_sets.pickle','rb')
 
-            X_train, y_train, X_val, y_val = pickle.load(infile)
+        X_train, y_train, X_val, y_val = pickle.load(infile)
 
-            ## I have reordered the columns so that the three continuous
-            ## variables are in the first three positions
-            cat_range = range(3, 27)
+        ## I have reordered the columns so that the three continuous
+        ## variables are in the first three positions
+        cat_range = range(3, 27)
 
-            ## Upsampling using SMOTE-NC
-            smote_nc = SMOTENC(categorical_features=cat_range, random_state=0)
+        ## Upsampling using SMOTE-NC
+        smote_nc = SMOTENC(categorical_features=cat_range, random_state=0)
 
-            X_resampled, y_resampled = smote_nc.fit_resample(X_train, y_train)
+        X_resampled, y_resampled = smote_nc.fit_resample(X_train, y_train)
+        ```
+        '''
 
-        ## Save for future use
-        with open('./smote_split_sets.pickle', 'wb') as f:
-            pickle.dump([X_resampled, y_resampled, X_val, y_val], f)
+        ## Get data from pickled file
+        infile = open('./smote_split_sets.pickle','rb')
+
+        X_resampled, y_resampled, X_val, y_val = pickle.load(infile)
+
 
         x = pd.DataFrame(y_resampled)[0].value_counts()
 
