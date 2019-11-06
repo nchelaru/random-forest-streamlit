@@ -54,14 +54,20 @@ if page == pages[0]:
     
     ''')
 
-    st.title('1. Introduction')
-
     '''
-    Of the myriad of supervised machine learning algorithms available, the random forest model is well-favoured for its robust 
+    Of the myriad of supervised machine learning algorithms available, the **random forest model** is well-favoured for its robust 
     out-of-box performance on datasets containing diverse data types. As it has very few statistical assumptions and require little feature
      engineering, it is a great option as the first model to fit onto a new dataset to explore how much "learnable" signal can found before attempting
       more sophisticated methods.
       
+    ###
+    '''
+
+    st.image('./forest.png', caption='Image credit: Icons 8', use_column_width=True)
+
+    '''
+    ###
+    
       As an ensemble method, the random forest model builds multiple decision trees and aggregate their results to create a more accurate 
     prediction than any of the individual models is capable of. Two features of the random forest model help to reduce the correlation between 
      the decision trees that hinders performance of conventional bagged decision tree models:
@@ -86,8 +92,8 @@ if page == pages[0]:
     use the [IBM Telco dataset](https://github.com/IBM/telco-customer-churn-on-icp4d) as an example how the random forest model 
     can be used in predicting customer churn.
     
-    Here, we will walk through the steps of a full machine learning workflow, from data preprocessing to calculating 
-    variable importance. Head over to the dropdown menu in the sidebar to get started!
+    Here, we will walk through the steps of a full machine learning workflow that incorporates both unsupervised and supervised 
+    modeling approaches, from data preprocessing to calculating variable importance. Head over to the dropdown menu in the sidebar to get started!
     '''
 
 
@@ -676,8 +682,6 @@ if page == pages[2]:
 
 # 3. Variable encoding
 if page == pages[3]:
-    st.title("4. Variable encoding")
-
     st.sidebar.markdown('''
     ---
     
@@ -816,9 +820,9 @@ if page == pages[4]:
 
     if topic == "1. Original dataset":
 
-        st.header("5.1 Split the original dataset")
-
         '''
+        # 5.1 Split the original dataset
+        
         We need to split the whole dataset into three chunks for training, testing and validating the model.
         '''
 
@@ -862,6 +866,10 @@ if page == pages[4]:
         )
 
         if st.checkbox("Visualize the datasets"):
+            '''
+            There are 7,043 customers in the dataset. Each symbol represents ~100 customers.
+            '''
+
             st.pyplot(width=900, height=800)
 
             plt.clf()
@@ -880,7 +888,7 @@ if page == pages[4]:
     if topic == "2. Random upsampling":
 
         '''
-        ## 5.2 Random upsampling
+        # 5.2 Address class imbalance: random upsampling of minority class
         
         The simplest approach to upsampling is to randomly draw instances from the minority class with replacement, which is implemented by
         `RandomOverSampler()` from the `imbalanced-learn` package.
@@ -940,10 +948,6 @@ if page == pages[4]:
             figsize=(8, 6)
         )
 
-        '''
-        ##
-        '''
-
         if st.checkbox("Upsample minority class"):
             st.markdown('''
             Now we have equal-sized positive and negative classes in the training set, each containing 4,130 instances.
@@ -953,16 +957,17 @@ if page == pages[4]:
 
             plt.tight_layout()
 
-            st.pyplot(width=900, height=700)
+            st.pyplot(width=900, height=500)
 
             plt.clf()
 
 
 
     if topic == "3. SMOTE-NC upsampling":
-        st.header("5.3 Create synthetic data")
 
         '''
+        # 5.3 Address class imbalance: create new data points in minority class
+        
         SMOTE (Synthetic Minority Over-sampling Technique) creates synthetic data points by creating and random choosing k-nearest-neighbours 
         of instances in the minority class. SMOTE-NC is an extension of the method for 
         use with datasets that contain both categorical and continuous variables, like the Telco customer churn dataset.
@@ -1029,9 +1034,9 @@ if page == pages[4]:
 
 
     if topic == "4. Create new classes by clustering":
-        st.header('5.4 Unsupervised clustering')
-
         '''
+        # 5.4 Create new classes using unsupervised clustering
+        
         As an interesting alternative approach, we might try redefining the problem at hand.
         
         From [principal dimensions analysis](http://rpubs.com/nchelaru/famd) done on this data set, I found that the "Churn" and "No Churn" populations 
@@ -1041,7 +1046,11 @@ if page == pages[4]:
 
         famd_res = pd.read_csv('./famd_res.csv')
 
-        fig = px.scatter_3d(famd_res, x='coord.Dim.1', y='coord.Dim.2', z='coord.Dim.3',
+        famd_res.rename(columns={'coord.Dim.1':'Principal dimension 1',
+                                'coord.Dim.2':'Principal dimension 2',
+                                'coord.Dim.3':'Principal dimension 3'}, inplace=True)
+
+        fig = px.scatter_3d(famd_res, x='Principal dimension 1', y='Principal dimension 2', z='Principal dimension 3',
                             color='Churn')
 
         fig.for_each_trace(lambda t: t.update(name=t.name.replace("Churn=","")))
@@ -1055,9 +1064,9 @@ if page == pages[4]:
         In other words, whether a customer churns given his/her personal and buying characteristics is much less deterministic than the species of an iris specimen
         given its physical dimensions.
         
-        Instead, we may try to use unsupervised clustering to identify "natural" groupings within this dataset. If this grouping has some correspondence with customer
+        Instead, we may try to use **unsupervised** clustering to identify "natural" groupings within this dataset. If this grouping has some correspondence with customer
         churn behaviour, it may be interesting (and potentially more fruitful) to predict this group membership instead. Here we will do so by adapting the workflow for clustering mixed-type
-        data (in R) shown [here](https://towardsdatascience.com/clustering-on-mixed-type-data-8bbd0a2569c3).
+        data by Gower distance (in R) shown [here](https://towardsdatascience.com/clustering-on-mixed-type-data-8bbd0a2569c3).
         '''
 
         df = pd.read_csv('./gower_res.csv')
@@ -1096,9 +1105,9 @@ if page == pages[4]:
 
             v = pd.DataFrame(opt_clust)
 
-            v.columns = ['No. clusters', 'Value']
+            v.columns = ['No. clusters', 'Silhouette width']
 
-            v.plot.line(x='No. clusters', y='Value')
+            v.plot.line(x='No. clusters', y='Silhouette width')
 
             st.pyplot()
 
@@ -1132,11 +1141,20 @@ if page == pages[4]:
             ''')
 
             if st.checkbox("Compare these two groups"):
+                '''
+                First, we can see how these two groups separate in the principal dimension feature space identified by 
+                factor analysis"
+                '''
+
                 famd_clust = pd.read_csv('./famd_clust.csv')
 
                 famd_clust['groups'] = famd_clust['groups'].astype(str)
 
-                fig = px.scatter_3d(famd_clust, x='coord.Dim.1', y='coord.Dim.2', z='coord.Dim.3',
+                famd_clust.rename(columns={'coord.Dim.1':'Principal dimension 1',
+                                         'coord.Dim.2':'Principal dimension 2',
+                                         'coord.Dim.3':'Principal dimension 3'}, inplace=True)
+
+                fig = px.scatter_3d(famd_clust, x='Principal dimension 1', y='Principal dimension 2', z='Principal dimension 3',
                                     color='groups')
 
                 fig.for_each_trace(lambda t: t.update(name=t.name.replace("Churn=","")))
@@ -1149,7 +1167,7 @@ if page == pages[4]:
                 In comparison to "Churn"/"No churn", customers appear to be much more linearly separable by membership in these two groups, suggesting 
                 this alternative approach to be a potentially viable one.
                 
-                Let's see how these two groups of customers differ by their characteristics:
+                Next, let's see how these two groups of customers differ by their characteristics:
                 '''
 
                 ## Reformat columns to contain column name
@@ -1197,7 +1215,7 @@ if page == pages[4]:
                 my_range=range(1,len(final.index)+1)
 
                 plt.style.use('default')
-                plt.rcParams.update({'figure.figsize':[10, 8], 'font.size':15})
+                plt.rcParams.update({'figure.figsize':[10, 8], 'font.size':17})
 
                 plt.hlines(y=my_range, xmin=ordered_df['Group 1'], xmax=ordered_df['Group 2'], color='grey', alpha=0.4)
                 plt.scatter(ordered_df['Group 1'], my_range, color='red', alpha=1, label='Group 1')
@@ -1215,11 +1233,14 @@ if page == pages[4]:
                 plt.clf()
 
                 '''
+                
                 So these two groups do differ in terms of churn, with ~15% of customers in "Group 1" and ~40% in "Group 2" leaving the company. Given the 
                 differences in some of their personal characteristics and purchasing behaviours that have been associated with different tendencies to churn in 
                 previous analyses, like paying by "Electronic check" [sic] and purchasing "Fiber optic" internet, this group membership may be a useful one to predict, 
                 in an attempt to separate the "loyal customers" from those who are more likely to be on the fence. While this is not as clear cut a distinction as "Churn"/"No churn", 
                 better classification results may actually be better for the company to target the right populations of customers for marketing/retention campaigns.
+                
+                ###
                 '''
 
                 n_bins = st.slider("Number of bins",
@@ -1298,6 +1319,12 @@ if page == pages[4]:
                         figsize=(8, 6)
                     )
 
+                    '''
+                    ###
+                    
+                    There are 7,043 customers in the dataset. Each symbol represents ~100 customers.
+                    '''
+
                     st.pyplot(width=900, height=800)
 
                     plt.clf()
@@ -1305,7 +1332,13 @@ if page == pages[4]:
 
 
 if page == pages[5]:
-    st.title("6. Hyperparameter tuning and model fitting")
+    st.sidebar.markdown(''' --- ''')
+
+    section = st.sidebar.radio('Navigate',
+                     ('1. Hyperparameter tuning',
+                      '2. Fit models',
+                      '3. Evaluate model performance')
+                     )
 
     st.sidebar.markdown('''
     
@@ -1326,74 +1359,76 @@ if page == pages[5]:
     - Precision-Recall   [[`scikit-learn` documentation]](https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html)
     ''')
 
-    '''
-    ## 6.1 Hyperparameter tuning
-    
-    Finding the optimal (to a degree) set of model hyperparameter settings for a particular dataset is key to getting
-     the best prediction accuracy out of it. This is done by searching through a predefined hyperparameter space ("grid") for the 
-     combination that achieves the best performance. Two most commonly used approaches are grid search and random search, where the former 
-     exhaustively searches through every possible combination in the grid, and the latter evaluates only a random sample of points on this 
-     grid. [Benchmarking](https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html)
-     shows that random search returns similar parameters as grid search but with much lower run time, so we will be using 
-     this method here:
-    
-    ```Python
-    ## Import libraries
-    from sklearn.model_selection import RandomizedSearchCV
-    from sklearn.ensemble import RandomForestClassifier
-
-    # Utility function to report best scores
-    def report(results, n_top=1):
-        for i in range(1, n_top + 1):
-            candidates = np.flatnonzero(results['rank_test_score'] == i)
-            for candidate in candidates:
-                return results['mean_test_score'][candidate], results['std_test_score'][candidate], results['params'][candidate]
-            
-    ## Specify parameter space
-    param_dist = {"n_estimators": [600, 800, 1000],
-                  "max_depth": sp_randint(1, 7),
-                  'max_features': ['auto', 'sqrt'],
-                  "min_samples_split": sp_randint(2, 11),
-                  'min_samples_leaf': [1, 2, 4],
-                  "bootstrap": [True, False],
-                  "criterion": ["gini", "entropy"]}
-    
-    # Instantiate a random forest classifier
-    clf = RandomForestClassifier()
-
-    # Randomized search
-    random_search = RandomizedSearchCV(clf, 
-                                       param_distributions=param_dist, 
-                                       n_iter=20, 
-                                       cv=5, 
-                                       iid=False)
-                                       
-    random_search.fit(X_train, y_train)
-
-    ## Get parameters
-    mean_test_score, std_test_score, params_list = report(random_search.cv_results_, n_top=1)
-    
-    bootstrap, class_weight, criterion, max_depth, max_features, min_samples_split, n_estimators = params_list.values()
-
-    ```
-    '''
-
-
-    if st.checkbox("Tune parameters"):
+    if section == '1. Hyperparameter tuning':
         '''
-        We performed random search in the parameter grid specified for all four of the datasets that we have, getting a 
-        set of parameters for each that we will be using to train the model below.
-  
+        # 6.1 Hyperparameter tuning
+        
+        Finding the optimal (to a degree) set of model hyperparameter settings for a particular dataset is key to getting
+         the best prediction accuracy out of it. This is done by searching through a predefined hyperparameter space ("grid") for the 
+         combination that achieves the best performance. Two most commonly used approaches are grid search and random search, where the former 
+         exhaustively searches through every possible combination in the grid, and the latter evaluates only a random sample of points on this 
+         grid. [Benchmarking](https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html)
+         shows that random search returns similar parameters as grid search but with much lower run time, so we will be using 
+         this method here:
+        
+        ```Python
+        ## Import libraries
+        from sklearn.model_selection import RandomizedSearchCV
+        from sklearn.ensemble import RandomForestClassifier
+    
+        # Utility function to report best scores
+        def report(results, n_top=1):
+            for i in range(1, n_top + 1):
+                candidates = np.flatnonzero(results['rank_test_score'] == i)
+                for candidate in candidates:
+                    return results['mean_test_score'][candidate], results['std_test_score'][candidate], results['params'][candidate]
+                
+        ## Specify parameter space
+        param_dist = {"n_estimators": [600, 800, 1000],
+                      "max_depth": sp_randint(1, 7),
+                      'max_features': ['auto', 'sqrt'],
+                      "min_samples_split": sp_randint(2, 11),
+                      'min_samples_leaf': [1, 2, 4],
+                      "bootstrap": [True, False],
+                      "criterion": ["gini", "entropy"]}
+        
+        # Instantiate a random forest classifier
+        clf = RandomForestClassifier()
+    
+        # Randomized search
+        random_search = RandomizedSearchCV(clf, 
+                                           param_distributions=param_dist, 
+                                           n_iter=20, 
+                                           cv=5, 
+                                           iid=False)
+                                           
+        random_search.fit(X_train, y_train)
+    
+        ## Get parameters
+        mean_test_score, std_test_score, params_list = report(random_search.cv_results_, n_top=1)
+        
+        bootstrap, class_weight, criterion, max_depth, max_features, min_samples_split, n_estimators = params_list.values()
+    
+        ```
         '''
 
-        infile = open('./para_df.pickle','rb')
 
-        para_df = pickle.load(infile)
+        if st.checkbox("Tune parameters"):
+            '''
+            We performed random search in the parameter grid specified for all four of the datasets that we have, getting a 
+            set of parameters for each that we will be using to train the model below.
+      
+            '''
 
-        st.dataframe(para_df.T)
+            infile = open('./para_df.pickle','rb')
 
+            para_df = pickle.load(infile)
+
+            st.dataframe(para_df.T)
+
+    if section == '2. Fit models':
         '''
-        ## 6.2 Train models
+        # 6.2 Fit model to training set
         
         For each of the four datasets, we will first fit the `RandomForestClassifier` object on the training set, with the corresponding 
         hyperparameters found above (`params_list`) to the training set. Then, to evaluate performance of the fitted model, it will be 
@@ -1443,128 +1478,127 @@ if page == pages[5]:
                  least overfitting.
                 '''
 
+    if section == '3. Evaluate model performance':
+        '''
+        # 6.3 Evaluate model performance
+        
+        ## 6.3.1 Confusion matrix
+        
+        What classification accuracy does not tell us is how well the model makes predictions for each of the two classes. This is particularly
+         problematic since the "Churn"/"No churn" classes are very imbalanced in our validation set. This is where the confusion matrix comes to the rescue, 
+         providing actual numbers of correct and incorrect predictions made for each class:
+        '''
+
+        if st.checkbox("Plot confusion matrices"):
+            infile = open('./cmatrix_dict.pickle', 'rb')
+
+            cmatrix_dict = pickle.load(infile)
+
+            names = ['Original', 'Random', 'SMOTE', 'Clusters']
+
+            fig = plt.figure()
+            fig.subplots_adjust(hspace=0.4, wspace=0.3)
+
+            sns.set(font_scale = 1.3)
+
+            for i, c in zip(range(1, 5), names):
+                ax = fig.add_subplot(2, 2, i)
+                sns.heatmap(cmatrix_dict[c], annot=True, ax=ax, annot_kws={"size": 18}, fmt='d', cbar=False,
+                            vmin=0, vmax=600)
+                ax.set_title(c, fontsize=22)
+                if i !=4 :
+                    ax.set_xticklabels(['No Churn (predicted)', 'Churn (predicted)'])
+                    ax.set_yticklabels(['No Churn (actual)', 'Churn (actual)'], va="center")
+                else:
+                    ax.set_xticklabels(['Group 1 (predicted)', 'Group 2 (predicted)'])
+                    ax.set_yticklabels(['Group 1 (actual)', 'Group 2 (actual)'], va="center")
+
+            plt.tight_layout()
+
+            st.pyplot(width=800, height=1000)
+
+            plt.clf()
+
+            '''
+            A model that makes more correct predictions than not in both classes will have higher numbers of instances 
+            in the diagonal going from the upper left to the bottom right. The model predicting membership of the two groups
+            identified using unsupervised clustering appears to be the highest performing model out of the four, with the other three
+            tending to produce false positives for "Churn" (upper right quadrant), particularly with the two models trained on upsampled 
+            training sets.
+            '''
+
+            '''
+            ## 6.3.2 Classification report
+            
+            The classification report calculates several metrics from the raw data in the confusion matrix, 
+            making it easier to compare performance between models:
+            
+            - Precision
+            > What percentage of positive predictions made by the model were actually correct?
+            
+            - Recall
+            > What percentage of positive instances were correctly predicted by the model?
+            
+            - f1 score
+            > A weighted harmonic mean of precision and recall, with 0 being the worst, 1 being the best
+            
+            '''
+
+            if st.checkbox("Check classification reports"):
+                infile = open('./crep_dict.pickle', 'rb')
+
+                crep_dict = pickle.load(infile)
+
+                names = ['Original', 'Random', 'SMOTE', 'Clusters']
+
+                fig = plt.figure()
+                fig.subplots_adjust(hspace=0.4, wspace=0.4)
+
+                sns.set(font_scale = 1.5)
+
+                for i, c in zip(range(1, 5), names):
+                    df = pd.DataFrame(crep_dict[c]).T
+                    ax = fig.add_subplot(2, 2, i)
+
+                    sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 18},
+                                cmap="YlGnBu", cbar=False, vmin=0, vmax=1)
+
+                    ax.set_title(c, fontsize=26)
+
+                    if i == 4:
+                        ax.set_yticklabels(['Group 1', 'Group2', 'Accuracy', 'Macro avg', 'Weighted avg'], va="center")
+                    else:
+                        ax.set_yticklabels(['No churn', 'Churn', 'Accuracy', 'Macro avg', 'Weighted avg'], va="center")
+
+
+                plt.tight_layout()
+
+                st.pyplot(width=800, height=1000)
+
+                plt.clf()
+
                 '''
-                ## 6.3 Evaluate model performance
+                Rule of thumb for interpreting classification reports:
+                - A model with high precision but low recall tends to produce **false negatives**
+                - A model with low precision but hight recall tends to produce **false positives**
+                - The weighted average of f1 score should be used to compare classifier models
                 
-                ### 6.3.1 Confusion matrix
+                As we are more interested in predicting churn, let's look at the performance of each model on that class (second row of each heatmap). 
+                We can see that the model trained on the imbalanced training set tends to produce false negatives, namely failing to identify customers who churn. 
+                The two models trained on the upsampled datasets show the opposite, prone to false positives, potentially due to the artificial inflation of the 
+                "Churn" class. This can be a trade-off when used in real-world applications, depending on whether failing to prevent customer churn or enacting unnecessary 
+                customer retention measures is more costly for the company. Judging by the f1 scores, which take into account both the precision and recall, 
+                the model trained on the original imbalanced dataset performs just as well as these two models.
                 
-                What classification accuracy does not tell us is how well the model makes predictions for each of the two classes. This is particularly
-                 problematic since the "Churn"/"No churn" classes are very imbalanced in our validation set. This is where the confusion matrix comes to the rescue, 
-                 providing actual numbers of correct and incorrect predictions made for each class:
+                Finally, the model trained to predict membership in the two groups identified by unsupervised clustering appear to perform the best. Recall ~15% of
+                 customers in "Group 1" have churned as compared to ~40% of customers in "Group 2". Therefore, when it comes to making predictions on new customers, 
+                 it may be more fruitful to try to predict whether they are **more or less likely** to churn, trading the certainty of a definite label 
+                 for more robust predictions.
                 '''
-
-                if st.checkbox("Plot confusion matrices"):
-                    infile = open('./cmatrix_dict.pickle', 'rb')
-
-                    cmatrix_dict = pickle.load(infile)
-
-                    names = ['Original', 'Random', 'SMOTE', 'Clusters']
-
-                    fig = plt.figure()
-                    fig.subplots_adjust(hspace=0.4, wspace=0.3)
-
-                    sns.set(font_scale = 1.3)
-
-                    for i, c in zip(range(1, 5), names):
-                        ax = fig.add_subplot(2, 2, i)
-                        sns.heatmap(cmatrix_dict[c], annot=True, ax=ax, annot_kws={"size": 18}, fmt='d', cbar=False,
-                                    vmin=0, vmax=600)
-                        ax.set_title(c, fontsize=22)
-                        if i !=4 :
-                            ax.set_xticklabels(['No Churn (predicted)', 'Churn (predicted)'])
-                            ax.set_yticklabels(['No Churn (actual)', 'Churn (actual)'], va="center")
-                        else:
-                            ax.set_xticklabels(['Group 1 (predicted)', 'Group 2 (predicted)'])
-                            ax.set_yticklabels(['Group 1 (actual)', 'Group 2 (actual)'], va="center")
-
-                    plt.tight_layout()
-
-                    st.pyplot(width=800, height=1000)
-
-                    plt.clf()
-
-                    '''
-                    A model that makes more correct predictions than not in both classes will have higher numbers of instances 
-                    in the diagonal going from the upper left to the bottom right. The model predicting membership of the two groups
-                    identified using unsupervised clustering appears to be the highest performing model out of the four, with the other three
-                    tending to produce false positives for "Churn" (upper right quadrant), particularly with the two models trained on upsampled 
-                    training sets.
-                    '''
-
-                    '''
-                    ### 6.3.2 Classification report
-                    
-                    The classification report calculates several metrics from the raw data in the confusion matrix, 
-                    making it easier to compare performance between models:
-                    
-                    - Precision
-                    > What percentage of positive predictions made by the model were actually correct?
-                    
-                    - Recall
-                    > What percentage of positive instances were correctly predicted by the model?
-                    
-                    - f1 score
-                    > A weighted harmonic mean of precision and recall, with 0 being the worst, 1 being the best
-                    
-                    '''
-
-                    if st.checkbox("Check classification reports"):
-                        infile = open('./crep_dict.pickle', 'rb')
-
-                        crep_dict = pickle.load(infile)
-
-                        names = ['Original', 'Random', 'SMOTE', 'Clusters']
-
-                        fig = plt.figure()
-                        fig.subplots_adjust(hspace=0.4, wspace=0.4)
-
-                        sns.set(font_scale = 1.5)
-
-                        for i, c in zip(range(1, 5), names):
-                            df = pd.DataFrame(crep_dict[c]).T
-                            ax = fig.add_subplot(2, 2, i)
-
-                            sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 18},
-                                        cmap="YlGnBu", cbar=False, vmin=0, vmax=1)
-
-                            ax.set_title(c, fontsize=26)
-
-                            if i == 4:
-                                ax.set_yticklabels(['Group 1', 'Group2', 'Accuracy', 'Macro avg', 'Weighted avg'], va="center")
-                            else:
-                                ax.set_yticklabels(['No churn', 'Churn', 'Accuracy', 'Macro avg', 'Weighted avg'], va="center")
-
-
-                        plt.tight_layout()
-
-                        st.pyplot(width=800, height=1000)
-
-                        plt.clf()
-
-                        '''
-                        Rule of thumb for interpreting classification reports:
-                        - A model with high precision but low recall tends to produce **false negatives**
-                        - A model with low precision but hight recall tends to produce **false positives**
-                        - The weighted average of f1 score should be used to compare classifier models
-                        
-                        As we are more interested in predicting churn, let's look at the performance of each model on that class (second row of each heatmap). 
-                        We can see that the model trained on the imbalanced training set tends to produce false negatives, namely failing to identify customers who churn. 
-                        The two models trained on the upsampled datasets show the opposite, prone to false positives, potentially due to the artificial inflation of the 
-                        "Churn" class. This can be a trade-off when used in real-world applications, depending on whether failing to prevent customer churn or enacting unnecessary 
-                        customer retention measures is more costly for the company. Judging by the f1 scores, which take into account both the precision and recall, 
-                        the model trained on the original imbalanced dataset performs just as well as these two models.
-                        
-                        Finally, the model trained to predict membership in the two groups identified by unsupervised clustering appear to perform the best. Recall ~15% of
-                         customers in "Group 1" have churned as compared to ~40% of customers in "Group 2". Therefore, when it comes to making predictions on new customers, 
-                         it may be more fruitful to try to predict whether they are **more or less likely** to churn, trading the certainty of a definite label 
-                         for more robust predictions.
-                        '''
 
 
 
 if page == pages[6]:
-    st.title("7. Calculate feature importance")
-
     st.sidebar.markdown('''
     
     ---
@@ -1588,6 +1622,14 @@ if page == pages[6]:
     only provides insights into novel relationships in the data, it also allows real-world domain knowledge to enter the picture and 
     check the validity of the predictions made. The many perils of treating machine learning models as black boxes are garnering growing attention 
     as we grow to rely on them in all aspects of our lives. For a great introduction to the topic, check out the ebook by Christopher Molnar as linked in the sidebar. 
+    
+    ###
+    '''
+
+    st.image('./feature_importance.png', caption='Image credit: Icons 8', use_column_width=True)
+
+    '''
+    ###
     
     One reasonably efficient and reliable technique for calculating feature importance for all models is **permutation importance**, which directly measures
     variable importance by observing the effect of scrambling the values of each predictor variable on model accuracy. Note that variables with *negative*
@@ -1615,70 +1657,80 @@ if page == pages[6]:
     imp_dict = pickle.load(infile)
 
     if st.checkbox("Calculate permutation feature importance"):
-        '''
-        First, we compare the permutated feature importance calculated for each of the three models trained to predict "Churn"/"No churn".
-        Interestingly, the three models are fairly consistent in treating `InternetService_Fiber optic` and `InternetService_No` as 
-        the most important features for prediction, and `Contract_Two year` and `TotalCharges` as the least. 
-        
-        Taking into account my earlier analyses of this dataset using approaches like [factor analysis of mixed data (FAMD)](http://rpubs.com/nchelaru/famd), 
-        [association rule mining](https://nancy-chelaru-centea.shinyapps.io/association_rule_mining) and [survival analysis](https://survival-analysis.herokuapp.com/), 
-        purchasing fiber optic internet service indeed is associated with leaving the company. It is also understandable that `TotalCharges` is not needed as a predictor variable 
-        when building the classifier, as it is the product of `MonthlyCharges` and `Tenure`, so its information is redundant. What is surprising is `Contract_Two year` being deemed
-        a variable that should be dropped, as it is shown to be a characteristic of "loyal" customers in the other analyses. It is possible that in dummy encoding the `Contract` variable, 
-        a customer can be interpreted as having a two-year contract if he/she is negative for `Contract_Month-to-month` and `Contract_One year`. It appears to be debatable whether a "reference"
-        column should be dropped, like `Contract_Two year`, when dummy encoding, so for the sake of demonstration I have opted to leave it in for this example.
-        '''
+        with st.spinner('Hang on tight...'):
+            '''
+            First, we compare the permutated feature importance calculated for each of the three models trained to predict "Churn"/"No churn".
+            Interestingly, the three models are fairly consistent in treating `InternetService_Fiber optic` and `InternetService_No` as 
+            the most important features for prediction, and `Contract_Two year` and `TotalCharges` as the least. 
+            
+            Taking into account my earlier analyses of this dataset using approaches like [factor analysis of mixed data (FAMD)](http://rpubs.com/nchelaru/famd), 
+            [association rule mining](https://nancy-chelaru-centea.shinyapps.io/association_rule_mining) and [survival analysis](https://survival-analysis.herokuapp.com/), 
+            purchasing fiber optic internet service indeed is associated with leaving the company. It is also understandable that `TotalCharges` is not needed as a predictor variable 
+            when building the classifier, as it is the product of `MonthlyCharges` and `Tenure`, so its information is redundant. What is surprising is `Contract_Two year` being deemed
+            a variable that should be dropped, as it is shown to be a characteristic of "loyal" customers in the other analyses. It is possible that in dummy encoding the `Contract` variable, 
+            a customer can be interpreted as having a two-year contract if he/she is negative for `Contract_Month-to-month` and `Contract_One year`. It appears to be debatable whether a "reference"
+            column should be dropped, like `Contract_Two year`, when dummy encoding, so for the sake of demonstration I have opted to leave it in for this example.
+            '''
 
-        imp_list = []
+            imp_list = []
 
-        for i in ['Original', 'Random', 'SMOTE']:
-            df = imp_dict[i]
-            imp_list.append(df)
+            for i in ['Original', 'Random', 'SMOTE']:
+                df = imp_dict[i]
+                imp_list.append(df)
 
-        imp_df = pd.concat(imp_list, axis=1, sort=True)
+            imp_df = pd.concat(imp_list, axis=1, sort=True)
 
-        imp_df.columns = ['Original', 'Oversampled', 'SMOTE-NC']
+            imp_df.columns = ['Original', 'Random upsampled', 'SMOTE upsampled']
 
-        imp_df = imp_df.sort_values(by='Original')
+            imp_df = imp_df.sort_values(by='Original')
 
-        imp_df['Mean'] = imp_df.mean(axis=1)
+            imp_df['Mean'] = imp_df.mean(axis=1)
 
-        imp_df = imp_df.sort_values(by='Mean')
+            imp_df = imp_df.sort_values(by='Mean')
 
-        plt.rcParams.update({'figure.figsize':[12, 12], 'font.size':14})
+            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(16, 14)})
 
-        imp_df.drop('Mean', axis=1).plot.barh()
+            imp_df.drop('Mean', axis=1).plot.barh()
 
-        plt.subplots_adjust(left=0.15, right=0.16,)
+            plt.subplots_adjust(left=0.15, right=0.16)
 
-        plt.tight_layout()
+            plt.xlabel('Permutated feature importance')
+            plt.ylabel('')
 
-        st.pyplot(width=900, height=900)
 
-        plt.clf()
+            plt.tight_layout()
 
-        '''
-        As for the model trained to predict membership in the two groups ("more likely to churn" and "less likely to churn") identified by 
-        unsupervised clustering, it also ranked `InternetService_Fiber optic` as the most important feature for prediction. This is consistent 
-        with our earlier comparison of customer characteristics in these two groups, showing that the two groups differ *the most* in the percentage 
-        of customers who have purchased fiber optic internet.  
-        '''
+            st.pyplot(width=900, height=900)
 
-        imp_dict['Clusters'].sort_values(by='Clusters').plot.barh()
+            plt.clf()
 
-        plt.subplots_adjust(left=0.15, right=0.16,)
+            '''
+            As for the model trained to predict membership in the two groups ("more likely to churn" and "less likely to churn") identified by 
+            unsupervised clustering, it also ranked `InternetService_Fiber optic` as the most important feature for prediction. This is consistent 
+            with our earlier comparison of customer characteristics in these two groups, showing that the two groups differ *the most* in the percentage 
+            of customers who have purchased fiber optic internet.  
+            '''
 
-        plt.tight_layout()
+            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(16, 14)})
 
-        st.pyplot(width=900, height=900)
+            imp_dict['Clusters'].sort_values(by='Clusters').plot.barh()
 
-        plt.clf()
+            plt.xlabel('Permutated feature importance')
+            plt.ylabel('')
 
-        '''
-        We can see that these four models provide both corroborating and differing results when it comes to feature importance. 
-        It is important to examine them together, as approach a data science problem from multiple angles and aggregating 
-        the results are key to gaining nuanced and robust insights to the data.  
-        '''
+            plt.subplots_adjust(left=0.15, right=0.16,)
+
+            plt.tight_layout()
+
+            st.pyplot(width=900, height=900)
+
+            plt.clf()
+
+            '''
+            We can see that these four models provide both corroborating and differing results when it comes to feature importance. 
+            It is important to examine them together, as approach a data science problem from multiple angles and aggregating 
+            the results are key to gaining nuanced and robust insights to the data.  
+            '''
 
 
 
@@ -1686,22 +1738,26 @@ if page == pages[7]:
 
     st.balloons()
 
+    '''
+    ### Congratulations! That was a *long* journey and you have made it to the end!
+    
+    ###
+    '''
+
+    st.image('./celebrate.png', use_column_width=True, caption='Image credit: Icons 8')
+
     st.sidebar.markdown(
     '''
     ---
     
     For other data science/web development projects that I've cooked up, head over to my portfolio at http://nancychelaru.rbind.io/portfolio/ .
-    '''
-    )
-
+    ''')
 
     '''
-    # 8. Where to go from here?
+    ###
     
-    Congratulations on finishing this long journey with me!
-    
-    Hopefully at this point, you are a bit more familiar with the machine learning workflow. The steps shown here are by no means exhaustive, and are
-    fairly simplified for demonstration purposes. 
+    Hopefully at this point, you are a bit more familiar with a typical workflow for applying machine learning to a business problem. 
+    The steps shown here are by no means exhaustive, and are fairly simplified for demonstration purposes. 
     
     The material presented here are a summary of my own learning so far, much of which have been done using these fantastic resources:
     
