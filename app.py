@@ -109,7 +109,7 @@ if page == pages[1]:
                       '3. Re-encode variable',
                       '4. Rename column headers',
                       '5. Correct column data type',
-                      '6. Combine sparse levels'))
+                      '6. Combine variable levels'))
 
 
     st.sidebar.markdown('''
@@ -122,7 +122,7 @@ if page == pages[1]:
 
 
     if section == '1. Preview data':
-        st.title('1. Preview data')
+        st.title('2.1. Preview data')
 
         '''
         The IBM Telco customer churn dataset, which details the personal characteristics and 
@@ -173,7 +173,7 @@ if page == pages[1]:
 
 
     if section == '2. Remove customer ID column':
-        st.title("2. Remove customer ID column")
+        st.title("2.2 Remove customer ID column")
 
         '''
         To start off, the `customerID` column contains the uniquely generated ID associated with each customer. As we would like to train 
@@ -197,7 +197,7 @@ if page == pages[1]:
 
 
     if section == '3. Re-encode variable':
-        st.title("3. Re-encode variable levels")
+        st.title("2.3 Re-encode variable levels")
 
         ## Data processing up to now
         df = pd.read_csv("https://github.com/treselle-systems/customer_churn_analysis/raw/master/WA_Fn-UseC_-Telco-Customer-Churn.csv")
@@ -247,7 +247,7 @@ if page == pages[1]:
 
 
     if section == '4. Rename column headers':
-        st.title("4. Rename column headers")
+        st.title("2.4 Rename column headers")
 
         '''
         This is a minor point, but for the sake of consistency, we will capitalize the headers for
@@ -266,14 +266,14 @@ if page == pages[1]:
 
 
     if section == '5. Correct column data type':
-        st.title("5. Correct column data type")
+        st.title("2.5 Correct column data type")
 
         '''
         Setting the correct data type for each column in a `pandas` dataframe is pretty important for the data to be treated in the 
         "correct manner" in the preprocessing and model fitting process.  
         '''
 
-        st.header("5.1 Set `TotalCharges` as numeric type")
+        st.header("2.5.1 Set `TotalCharges` as numeric type")
 
         df = pd.read_csv("https://github.com/treselle-systems/customer_churn_analysis/raw/master/WA_Fn-UseC_-Telco-Customer-Churn.csv")
 
@@ -363,7 +363,7 @@ if page == pages[1]:
 
                     st.dataframe(df[df['Tenure'] == 0].style.applymap(highlight_cols, subset=pd.IndexSlice[:, ['Tenure', 'TotalCharges']]))
 
-                    st.header('5.2 Set categorical variables as "category" type')
+                    st.header('2.5.2 Set categorical variables as "category" type')
 
                     '''
                     This step is not strictly necessary, but setting the column data types of categorical variables
@@ -387,8 +387,8 @@ if page == pages[1]:
 
 
 
-    if section == '6. Combine sparse levels':
-        st.title("6. Combine sparse levels")
+    if section == '6. Combine variable levels':
+        st.title("2.6 Combine categorical variable levels")
 
         df = pd.read_csv("https://github.com/treselle-systems/customer_churn_analysis/raw/master/WA_Fn-UseC_-Telco-Customer-Churn.csv")
 
@@ -558,7 +558,7 @@ if page == pages[2]:
             fig = sunburst_fig()
 
             st.plotly_chart(fig, width=700, height=700)
-    elif var1 != ' ' and var2 == ' ' and df[var1].dtype == 'object':
+    elif var1 != ' ' and (var2 == ' ' or var2 == var1) and df[var1].dtype == 'object':
         '''
         There are 7,043 customers in the dataset. Each symbol represents ~100 customers.
         '''
@@ -571,14 +571,14 @@ if page == pages[2]:
                 rows=5,
                 columns=14,
                 values=data,
-                legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.2), "fontsize":16, 'ncol':2},
+                legend={'loc': 'center', 'bbox_to_anchor': (0.5, 1.2), "fontsize":20, 'ncol':2},
                 icons='user',
                 font_size=38,
                 icon_legend=True,
                 figsize=(12, 8)
             )
 
-            plt.tight_layout()
+           # plt.tight_layout()
 
             st.pyplot()
 
@@ -601,15 +601,15 @@ if page == pages[2]:
             st.plotly_chart(fig)
     elif var1 != var2 and df[var1].dtype == 'object' and df[var2].dtype == 'object':
         with st.spinner('Working on it...'):
+            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(16, 10)})
+
             fig = sns.countplot(x=var1, hue=var2, data=df, palette="Set3")
 
             plt.ylabel('Count')
 
-            sns.set(style="ticks", font_scale=2.2, rc={'figure.figsize':(18, 11)})
-
             plt.grid(False)
 
-            plt.tight_layout()
+            #plt.tight_layout()
 
             st.pyplot()
 
@@ -633,9 +633,11 @@ if page == pages[2]:
             st.plotly_chart(fig)
     elif df[var1].dtype == 'object' and df[var2].dtype != 'object':
         with st.spinner('Working on it...'):
+            sns.set(style='ticks', font_scale=2.0, rc={'figure.figsize':(16, 10)})
+
             fig = sns.barplot(x=var1, y=var2, data=df, palette="Set3")
 
-            plt.tight_layout()
+            #plt.tight_layout()
 
             st.pyplot()
 
@@ -647,7 +649,8 @@ if page == pages[2]:
         with st.spinner('Working on it...'):
             fig = px.histogram(df, x=var1, color=None, nbins=n_bins)
 
-            fig.update_layout(legend_orientation="h",
+            fig.update_layout(plot_bgcolor='rgba(0,0,0,0)',
+                              legend_orientation="h",
                               legend=dict(x=0, y=1.1),
                               yaxis=go.layout.YAxis(
                                   title=go.layout.yaxis.Title(
@@ -658,11 +661,9 @@ if page == pages[2]:
             st.plotly_chart(fig)
     elif var1 != var2 and df[var1].dtype != 'object' and df[var2].dtype != 'object':
         with st.spinner('Working on it...'):
+            sns.set(style='ticks', font_scale=1.1, rc={'figure.figsize':(12, 6)})
+
             sns.jointplot(df[var1], df[var2], kind="hex", color="#4CB391")
-
-            sns.set(style="ticks", font_scale=1.1, rc={'figure.figsize':(12, 6)})
-
-            plt.tight_layout()
 
             st.pyplot()
 
