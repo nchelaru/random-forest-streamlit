@@ -1679,7 +1679,7 @@ if page == pages[6]:
             the most important features for prediction, and `Contract_Two year` and `TotalCharges` as the least. 
             
             Taking into account my earlier analyses of this dataset using approaches like [factor analysis of mixed data (FAMD)](http://rpubs.com/nchelaru/famd), 
-            [association rule mining](https://nancy-chelaru-centea.shinyapps.io/association_rule_mining) and [survival analysis](https://survival-analysis.herokuapp.com/), 
+            [association rule mining](https://nancy-chelaru-centea.shinyapps.io/assn_rules_mining/) and [survival analysis](https://survival-analysis.herokuapp.com/), 
             purchasing fiber optic internet service indeed is associated with leaving the company. It is also understandable that `TotalCharges` is not needed as a predictor variable 
             when building the classifier, as it is the product of `MonthlyCharges` and `Tenure`, so its information is redundant. What is surprising is `Contract_Two year` being deemed
             a variable that should be dropped, as it is shown to be a characteristic of "loyal" customers in the other analyses. It is possible that in dummy encoding the `Contract` variable, 
