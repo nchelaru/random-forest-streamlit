@@ -41,6 +41,7 @@ page = st.sidebar.selectbox('Navigate', options=pages)
 
 # 1. Introduction
 if page == pages[0]:
+
     st.sidebar.markdown('''
     
     ---
@@ -552,6 +553,12 @@ if page == pages[2]:
 
     var2 = st.sidebar.selectbox("Select variable 2", cat_list)
 
+    plt.style.use('seaborn-ticks')
+
+    plt.rcParams.update({'axes.labelpad': 15, 'axes.labelsize': 18, 'xtick.labelsize':16, 'ytick.labelsize': 14,
+                         'legend.title_fontsize': 24, 'legend.loc':'best', 'legend.fontsize':'medium',
+                         'figure.figsize':(10, 8)})
+
     if var1 == ' ' and var2 == ' ':
         '''
         Click on any of the categorical variable names to expand the
@@ -584,7 +591,7 @@ if page == pages[2]:
                 figsize=(12, 8)
             )
 
-           # plt.tight_layout()
+            # plt.tight_layout()
 
             st.pyplot()
 
@@ -594,28 +601,31 @@ if page == pages[2]:
                            min_value=10, max_value=50, value=10, step=2)
 
         with st.spinner('Working on it...'):
-            fig = px.histogram(df, x=var1, nbins=n_bins)
+            fig = px.histogram(df, x=var1, nbins=n_bins, width=1200)
 
             fig.update_layout(plot_bgcolor='rgba(0,0,0,0)',
-                            yaxis=go.layout.YAxis(
-                                title=go.layout.yaxis.Title(
-                                    text="Count"
-                                )
-                            )
-                        )
+                              yaxis=go.layout.YAxis(
+                                  title=go.layout.yaxis.Title(
+                                      text="Count"
+                                  )
+                              )
+                              )
 
             st.plotly_chart(fig)
     elif var1 != var2 and df[var1].dtype == 'object' and df[var2].dtype == 'object':
         with st.spinner('Working on it...'):
-            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(16, 10)})
-
             fig = sns.countplot(x=var1, hue=var2, data=df, palette="Set3")
 
             plt.ylabel('Count')
 
+            if var1 == 'PaymentMethod':
+                plt.xticks(rotation=30, ha="right")
+            else:
+                pass
+
             plt.grid(False)
 
-            #plt.tight_layout()
+            plt.tight_layout()
 
             st.pyplot()
 
@@ -625,10 +635,10 @@ if page == pages[2]:
                            min_value=10, max_value=50, value=10, step=2)
 
         with st.spinner('Working on it...'):
-            fig = px.histogram(df, x=var1, color=var2, opacity=0.4, barmode = 'overlay', nbins=n_bins)
+            fig = px.histogram(df, x=var1, color=var2, opacity=0.4, barmode = 'overlay', nbins=n_bins, width=1000)
 
             fig.update_layout(plot_bgcolor='rgba(0,0,0,0)',
-                             legend_orientation="h",
+                              legend_orientation="h",
                               legend=dict(x=0, y=1.1),
                               yaxis=go.layout.YAxis(
                                   title=go.layout.yaxis.Title(
@@ -639,11 +649,18 @@ if page == pages[2]:
             st.plotly_chart(fig)
     elif df[var1].dtype == 'object' and df[var2].dtype != 'object':
         with st.spinner('Working on it...'):
-            sns.set(style='ticks', font_scale=2.0, rc={'figure.figsize':(16, 10)})
+            # sns.set(style='ticks', font_scale=2.2,
+            #         rc={'figure.figsize':(18, 16), 'axes.labelpad':30})
 
             fig = sns.barplot(x=var1, y=var2, data=df, palette="Set3")
 
-            #plt.tight_layout()
+            if var1 == 'PaymentMethod':
+                plt.xticks(rotation=20, ha="right")
+            else:
+                pass
+
+
+            plt.tight_layout()
 
             st.pyplot()
 
@@ -653,7 +670,7 @@ if page == pages[2]:
                            min_value=10, max_value=50, value=10, step=2)
 
         with st.spinner('Working on it...'):
-            fig = px.histogram(df, x=var1, color=None, nbins=n_bins)
+            fig = px.histogram(df, x=var1, color=None, nbins=n_bins, width=1000)
 
             fig.update_layout(plot_bgcolor='rgba(0,0,0,0)',
                               legend_orientation="h",
@@ -1061,8 +1078,8 @@ if page == pages[4]:
 
         '''
         This makes sense for a real world dataset, as customers may leave or stay at various times due interplays amongst a myriad of reasons. 
-        In other words, whether a customer churns given his/her personal and buying characteristics is much less deterministic than the species of an iris specimen
-        given its physical dimensions.
+        In other words, whether a customer churns given his/her personal and buying characteristics is much less deterministic than, for example,
+        the species of an iris specimem given its physical dimensions.
         
         Instead, we may try to use **unsupervised** clustering to identify "natural" groupings within this dataset. If this grouping has some correspondence with customer
         churn behaviour, it may be interesting (and potentially more fruitful) to predict this group membership instead. Here we will do so by adapting the workflow for clustering mixed-type
@@ -1143,7 +1160,7 @@ if page == pages[4]:
             if st.checkbox("Compare these two groups"):
                 '''
                 First, we can see how these two groups separate in the principal dimension feature space identified by 
-                factor analysis"
+                factor analysis:
                 '''
 
                 famd_clust = pd.read_csv('./famd_clust.csv')
@@ -1155,7 +1172,7 @@ if page == pages[4]:
                                          'coord.Dim.3':'Principal dimension 3'}, inplace=True)
 
                 fig = px.scatter_3d(famd_clust, x='Principal dimension 1', y='Principal dimension 2', z='Principal dimension 3',
-                                    color='groups')
+                                    color='groups').for_each_trace(lambda t: t.update(name=t.name.replace("groups=","Group=")))
 
                 fig.for_each_trace(lambda t: t.update(name=t.name.replace("Churn=","")))
 
@@ -1248,7 +1265,7 @@ if page == pages[4]:
 
                 for i in ['MonthlyCharges', 'Tenure', 'TotalCharges']:
                     fig = px.histogram(df, x=i, color="groups", opacity=0.4,
-                                       color_discrete_sequence = ['red', 'green'], barmode = 'overlay', nbins=n_bins)
+                                       color_discrete_sequence = ['red', 'green'], barmode = 'overlay', nbins=n_bins).for_each_trace(lambda t: t.update(name=t.name.replace("groups=","Group=")))
 
                     fig.update_layout(legend_orientation="h",
                                       legend=dict(x=0, y=1.1),
@@ -1434,8 +1451,6 @@ if page == pages[5]:
         hyperparameters found above (`params_list`) to the training set. Then, to evaluate performance of the fitted model, it will be 
         used to make predictions on the validation set. The `score` calculated here is the classification accuracy of the model
          on a given dataset averaged across the two classes:
-         
-         classification accuracy = correct predictions / total predictions
         
         ```Python
         ## Define function for calculating scores
@@ -1750,7 +1765,9 @@ if page == pages[7]:
     '''
     ---
     
-    For other data science/web development projects that I've cooked up, head over to my portfolio at http://nancychelaru.rbind.io/portfolio/ .
+    [Source code](https://github.com/nchelaru/random-forest-streamlit) for this app.
+    
+    For other data science/web development projects that I've cooked up, please head over to my portfolio, [The Perennial Beginner](http://nancychelaru.rbind.io/portfolio/ ).
     ''')
 
     '''
