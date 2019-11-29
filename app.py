@@ -1703,7 +1703,7 @@ if page == pages[6]:
 
             imp_df = imp_df.sort_values(by='Mean')
 
-            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(16, 14)})
+            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(16, 14),  'legend.loc':'best'})
 
             imp_df.drop('Mean', axis=1).plot.barh()
 
@@ -1767,7 +1767,7 @@ if page == pages[7]:
     
     [Source code](https://github.com/nchelaru/random-forest-streamlit) for this app.
     
-    For other data science/web development projects that I've cooked up, please head over to my portfolio, [The Perennial Beginner](http://nancychelaru.rbind.io/portfolio/ ).
+    For other data science/web development projects that I've cooked up, please head over to my portfolio, [The Perennial Beginner](http://nancychelaru.rbind.io/).
     ''')
 
     '''
