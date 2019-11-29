@@ -1674,8 +1674,9 @@ if page == pages[6]:
     if st.checkbox("Calculate permutation feature importance"):
         with st.spinner('Hang on tight...'):
             '''
-            First, we compare the permutated feature importance calculated for each of the three models trained to predict "Churn"/"No churn".
-            Interestingly, the three models are fairly consistent in treating `InternetService_Fiber optic` and `InternetService_No` as 
+            First, we compare the permutated feature importance calculated for each of the three models trained to predict "Churn"/"No churn" from the 
+            original ('Original'), randomly upsampled ('Random') and SMOTE-NC upsampled ('SMOTE-NC') datasets. Interestingly, the three models are fairly
+             consistent in treating `InternetService_Fiber optic` and `InternetService_No` as 
             the most important features for prediction, and `Contract_Two year` and `TotalCharges` as the least. 
             
             Taking into account my earlier analyses of this dataset using approaches like [factor analysis of mixed data (FAMD)](http://rpubs.com/nchelaru/famd), 
@@ -1695,7 +1696,7 @@ if page == pages[6]:
 
             imp_df = pd.concat(imp_list, axis=1, sort=True)
 
-            imp_df.columns = ['Original', 'Random upsampled', 'SMOTE upsampled']
+            imp_df.columns = ['Original', 'Random', 'SMOTE-NC']
 
             imp_df = imp_df.sort_values(by='Original')
 
@@ -1703,11 +1704,11 @@ if page == pages[6]:
 
             imp_df = imp_df.sort_values(by='Mean')
 
-            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(16, 14),  'legend.loc':'best'})
+            sns.set(style="ticks", font_scale=2.3, rc={'figure.figsize':(18, 14),  'legend.loc':'lower right'})
 
             imp_df.drop('Mean', axis=1).plot.barh()
 
-            plt.subplots_adjust(left=0.15, right=0.16)
+            plt.subplots_adjust(left=0.12, right=0.13)
 
             plt.xlabel('Permutated feature importance')
             plt.ylabel('')
