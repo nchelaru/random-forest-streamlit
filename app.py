@@ -555,9 +555,9 @@ if page == pages[2]:
 
     plt.style.use('seaborn-ticks')
 
-    plt.rcParams.update({'axes.labelpad': 15, 'axes.labelsize': 18, 'xtick.labelsize':16, 'ytick.labelsize': 14,
-                         'legend.title_fontsize': 24, 'legend.loc':'best', 'legend.fontsize':'medium',
-                         'figure.figsize':(10, 8)})
+    plt.rcParams.update({'axes.labelpad': 15, 'axes.labelsize': 18, 'xtick.labelsize': 16, 'ytick.labelsize': 14,
+                         'legend.title_fontsize': 24, 'legend.loc': 'best', 'legend.fontsize': 'medium',
+                         'figure.figsize': (10, 8)})
 
     if var1 == ' ' and var2 == ' ':
         '''
@@ -614,6 +614,9 @@ if page == pages[2]:
             st.plotly_chart(fig)
     elif var1 != var2 and df[var1].dtype == 'object' and df[var2].dtype == 'object':
         with st.spinner('Working on it...'):
+
+            sns.set_context("talk", rc={'axes.titlesize': 20, 'legend.fontsize': 14.0, 'legend.title_fontsize': 24.0})
+
             fig = sns.countplot(x=var1, hue=var2, data=df, palette="Set3")
 
             plt.ylabel('Count')
@@ -649,8 +652,7 @@ if page == pages[2]:
             st.plotly_chart(fig)
     elif df[var1].dtype == 'object' and df[var2].dtype != 'object':
         with st.spinner('Working on it...'):
-            # sns.set(style='ticks', font_scale=2.2,
-            #         rc={'figure.figsize':(18, 16), 'axes.labelpad':30})
+            sns.set_context("talk", rc={'axes.titlesize': 20, 'legend.fontsize': 14.0, 'legend.title_fontsize': 24.0})
 
             fig = sns.barplot(x=var1, y=var2, data=df, palette="Set3")
 
