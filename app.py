@@ -1722,19 +1722,18 @@ if page == pages[6]:
 
             imp_df = imp_df.sort_values(by='Mean')
 
-            sns.set(style="ticks", font_scale=2.3, rc={'figure.figsize':(17, 14),  'legend.loc':'lower right'})
+            plt.figure(figsize=(16, 14))
+
+            sns.set(style="ticks", font_scale=2.3, rc={'legend.loc':'lower right'})
 
             imp_df.drop('Mean', axis=1).plot.barh()
-
-            plt.subplots_adjust(left=0.07, right=0.08)
 
             plt.xlabel('Permutated feature importance')
             plt.ylabel('')
 
-
             plt.tight_layout()
 
-            st.pyplot(width=900, height=900)
+            st.pyplot(width=900, height=2100)
 
             plt.clf()
 
@@ -1745,14 +1744,14 @@ if page == pages[6]:
             of customers who have purchased fiber optic internet.  
             '''
 
-            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(15, 14)})
+            sns.set(style="ticks", font_scale=2.3, rc={'legend.loc':'lower right'})
+
+            plt.figure(figsize=(16, 14))
 
             imp_dict['Clusters'].sort_values(by='Clusters').plot.barh()
 
             plt.xlabel('Permutated feature importance')
             plt.ylabel('')
-
-            plt.subplots_adjust(left=0.07, right=0.08,)
 
             plt.tight_layout()
 
