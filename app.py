@@ -1124,6 +1124,9 @@ if page == pages[4]:
 
             v.columns = ['No. clusters', 'Silhouette width']
 
+            plt.style.use('seaborn-white')
+            plt.figure(figsize = (4, 4))
+
             v.plot.line(x='No. clusters', y='Silhouette width')
 
             st.pyplot()
@@ -1231,17 +1234,17 @@ if page == pages[4]:
                 ordered_df = final.sort_values(by='Diff')
                 my_range=range(1,len(final.index)+1)
 
-                plt.style.use('default')
-                plt.rcParams.update({'figure.figsize':[10, 8], 'font.size':17})
+                plt.style.use('seaborn-white')
+                plt.figure(figsize=(8, 10))
 
                 plt.hlines(y=my_range, xmin=ordered_df['Group 1'], xmax=ordered_df['Group 2'], color='grey', alpha=0.4)
                 plt.scatter(ordered_df['Group 1'], my_range, color='red', alpha=1, label='Group 1')
                 plt.scatter(ordered_df['Group 2'], my_range, color='green', alpha=1, label='Group 2')
-                plt.legend(loc='upper right', prop={'size': 16})
+                plt.legend(loc='upper right', prop={'size': 14})
 
                 # Add title and axis names
-                plt.yticks(my_range, ordered_df['Category'])
-                plt.xlabel('% of customers in group ')
+                plt.yticks(my_range, ordered_df['Category'], fontsize=14)
+                plt.xlabel('% of customers in group', fontsize=14)
 
                 plt.tight_layout()
 
@@ -1257,6 +1260,7 @@ if page == pages[4]:
                 in an attempt to separate the "loyal customers" from those who are more likely to be on the fence. While this is not as clear cut a distinction as "Churn"/"No churn", 
                 better classification results may actually be better for the company to target the right populations of customers for marketing/retention campaigns.
                 
+                We should also compare the two groups by the three continuous variables:
                 ###
                 '''
 
@@ -1283,6 +1287,9 @@ if page == pages[4]:
                 df.drop('Churn', axis=1, inplace=True)
 
                 '''
+                Looks like the two groups differ the most in terms of `MonthlyCharges`, where the less "loyal" Group 2 paying
+                much more on average per month than Group 1.
+                
                 Finally, we will do the same train-test split to get this dataset ready for modelling:
                 '''
 
@@ -1476,6 +1483,8 @@ if page == pages[5]:
 
                 scores = pickle.load(infile)
 
+                plt.style.use('seaborn-white')
+
                 scores.plot.barh(figsize=(8, 6), fontsize=14)
 
                 plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=3, fontsize=12)
@@ -1511,22 +1520,27 @@ if page == pages[5]:
 
             names = ['Original', 'Random', 'SMOTE', 'Clusters']
 
-            fig = plt.figure()
+            fig = plt.figure(figsize=(10, 8))
             fig.subplots_adjust(hspace=0.4, wspace=0.3)
 
-            sns.set(font_scale = 1.3)
+            #sns.set(font_scale = 1.5)
+            plt.style.use('seaborn-pastel')
+            sns.set_context("talk")
 
             for i, c in zip(range(1, 5), names):
                 ax = fig.add_subplot(2, 2, i)
-                sns.heatmap(cmatrix_dict[c], annot=True, ax=ax, annot_kws={"size": 18}, fmt='d', cbar=False,
-                            vmin=0, vmax=600)
-                ax.set_title(c, fontsize=22)
+                sns.heatmap(cmatrix_dict[c], annot=True, ax=ax, annot_kws={"size": 14}, fmt='d', cbar=False,
+                            vmin=0, vmax=950)
+                ax.set_title(c, fontsize=16)
+                ax.tick_params(axis='both', which='major', labelsize=12)
+                ax.tick_params(axis='both', which='both', length=0)
                 if i !=4 :
                     ax.set_xticklabels(['No Churn (predicted)', 'Churn (predicted)'])
                     ax.set_yticklabels(['No Churn (actual)', 'Churn (actual)'], va="center")
                 else:
                     ax.set_xticklabels(['Group 1 (predicted)', 'Group 2 (predicted)'])
                     ax.set_yticklabels(['Group 1 (actual)', 'Group 2 (actual)'], va="center")
+
 
             plt.tight_layout()
 
@@ -1569,16 +1583,19 @@ if page == pages[5]:
                 fig = plt.figure()
                 fig.subplots_adjust(hspace=0.4, wspace=0.4)
 
-                sns.set(font_scale = 1.5)
+                #sns.set(font_scale = 1.5)
+                sns.set_context("notebook")
 
                 for i, c in zip(range(1, 5), names):
                     df = pd.DataFrame(crep_dict[c]).T
                     ax = fig.add_subplot(2, 2, i)
 
-                    sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 18},
+                    sns.heatmap(df.drop('support', axis=1), annot=True, ax=ax, annot_kws={"size": 14},
                                 cmap="YlGnBu", cbar=False, vmin=0, vmax=1)
 
-                    ax.set_title(c, fontsize=26)
+                    ax.set_title(c, fontsize=16)
+                    ax.tick_params(axis='both', which='major', labelsize=12)
+                    ax.tick_params(axis='both', which='both', length=0)
 
                     if i == 4:
                         ax.set_yticklabels(['Group 1', 'Group2', 'Accuracy', 'Macro avg', 'Weighted avg'], va="center")
@@ -1704,11 +1721,11 @@ if page == pages[6]:
 
             imp_df = imp_df.sort_values(by='Mean')
 
-            sns.set(style="ticks", font_scale=2.3, rc={'figure.figsize':(18, 14),  'legend.loc':'lower right'})
+            sns.set(style="ticks", font_scale=2.3, rc={'figure.figsize':(17, 14),  'legend.loc':'lower right'})
 
             imp_df.drop('Mean', axis=1).plot.barh()
 
-            plt.subplots_adjust(left=0.12, right=0.13)
+            plt.subplots_adjust(left=0.07, right=0.08)
 
             plt.xlabel('Permutated feature importance')
             plt.ylabel('')
@@ -1727,14 +1744,14 @@ if page == pages[6]:
             of customers who have purchased fiber optic internet.  
             '''
 
-            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(16, 14)})
+            sns.set(style="ticks", font_scale=2.0, rc={'figure.figsize':(15, 14)})
 
             imp_dict['Clusters'].sort_values(by='Clusters').plot.barh()
 
             plt.xlabel('Permutated feature importance')
             plt.ylabel('')
 
-            plt.subplots_adjust(left=0.15, right=0.16,)
+            plt.subplots_adjust(left=0.07, right=0.08,)
 
             plt.tight_layout()
 
