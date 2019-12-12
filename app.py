@@ -1534,7 +1534,7 @@ if page == pages[5]:
                 sns.heatmap(cmatrix_dict[c], annot=True, ax=ax, annot_kws={"size": 14}, fmt='d', cbar=False,
                             vmin=0, vmax=950)
                 ax.set_title(c, fontsize=16)
-                ax.tick_params(axis='both', which='major', labelsize=12)
+                ax.tick_params(axis='both', which='major', labelsize=14)
                 ax.tick_params(axis='both', which='both', length=0)
                 if i !=4 :
                     ax.set_xticklabels(['No Churn (predicted)', 'Churn (predicted)'])
@@ -1582,11 +1582,10 @@ if page == pages[5]:
 
                 names = ['Original', 'Random', 'SMOTE', 'Clusters']
 
-                fig = plt.figure()
-                fig.subplots_adjust(hspace=0.4, wspace=0.4)
+                sns.set_context("talk")
 
-                #sns.set(font_scale = 1.5)
-                sns.set_context("notebook")
+                fig = plt.figure(figsize=(10, 8))
+                fig.subplots_adjust(hspace=0.4, wspace=0.4)
 
                 for i, c in zip(range(1, 5), names):
                     df = pd.DataFrame(crep_dict[c]).T
@@ -1596,7 +1595,7 @@ if page == pages[5]:
                                 cmap="YlGnBu", cbar=False, vmin=0, vmax=1)
 
                     ax.set_title(c, fontsize=16)
-                    ax.tick_params(axis='both', which='major', labelsize=12)
+                    ax.tick_params(axis='both', which='major', labelsize=14)
                     ax.tick_params(axis='both', which='both', length=0)
 
                     if i == 4:
