@@ -441,6 +441,13 @@ if page == pages[1]:
 
         if st.checkbox("Abracadabra!"):
             with st.spinner('Working on it...'):
+                ## Set style
+                plt.style.use('seaborn-ticks')
+
+                plt.rcParams.update(
+                    {'axes.labelpad': 15, 'axes.labelsize': 18, 'xtick.labelsize': 8, 'ytick.labelsize': 14,
+                     'legend.title_fontsize': 24, 'legend.loc': 'best', 'legend.fontsize': 18})
+
                 ## Set up subplot grid
                 fig, axes = plt.subplots(nrows = 9, ncols = 2,
                                          sharex = False, sharey = False,
@@ -456,12 +463,17 @@ if page == pages[1]:
                     if df[cat].dtype == 'object':
                         df[cat].value_counts().plot.barh(ax=ax)
                         ax.set_title(cat, fontsize=14)
-                        ax.tick_params(axis='both', which='major', labelsize=12)
+                        ax.spines['right'].set_visible(False)
+                        ax.spines['top'].set_visible(False)
+                        ax.yaxis.set_ticks_position('left')
+                        ax.xaxis.set_ticks_position('bottom')
+                        ax.set_xticks([0, 2500, 5000])
                         ax.grid(False)
 
-                fig.subplots_adjust(top=0.92, wspace=0.2, hspace=0.3)
+                fig.subplots_adjust(top=0.92, wspace=0.2, hspace=0.2)
 
                 plt.tight_layout()
+
 
                 fig.delaxes(axes[8][1])
 
@@ -492,6 +504,13 @@ if page == pages[1]:
 
             if st.checkbox("Look at the variables again"):
                 with st.spinner('Working on it...'):
+                    ## Set style
+                    plt.style.use('seaborn-ticks')
+
+                    plt.rcParams.update(
+                        {'axes.labelpad': 15, 'axes.labelsize': 18, 'xtick.labelsize': 8, 'ytick.labelsize': 14,
+                         'legend.title_fontsize': 24, 'legend.loc': 'best', 'legend.fontsize': 18})
+
                     ## Set up subplot grid
                     fig, axes = plt.subplots(nrows = 9, ncols = 2,
                                              sharex = False, sharey = False,
@@ -507,7 +526,11 @@ if page == pages[1]:
                         if df[cat].dtype == 'object':
                             df[cat].value_counts().plot.barh(ax=ax)
                             ax.set_title(cat, fontsize=14)
-                            ax.tick_params(axis='both', which='major', labelsize=12)
+                            ax.spines['right'].set_visible(False)
+                            ax.spines['top'].set_visible(False)
+                            ax.yaxis.set_ticks_position('left')
+                            ax.xaxis.set_ticks_position('bottom')
+                            ax.set_xticks([0, 2500, 5000])
                             ax.grid(False)
 
                     fig.subplots_adjust(top=0.92, wspace=0.2, hspace=0.3)
@@ -619,6 +642,8 @@ if page == pages[2]:
 
             fig = sns.countplot(x=var1, hue=var2, data=df, palette="Set3")
 
+            sns.despine(right=True, top=True)
+
             plt.ylabel('Count')
 
             if var1 == 'PaymentMethod':
@@ -656,6 +681,8 @@ if page == pages[2]:
 
             fig = sns.barplot(x=var1, y=var2, data=df, palette="Set3")
 
+            sns.despine(right=True, top=True)
+
             if var1 == 'PaymentMethod':
                 plt.xticks(rotation=20, ha="right")
             else:
@@ -686,7 +713,8 @@ if page == pages[2]:
             st.plotly_chart(fig)
     elif var1 != var2 and df[var1].dtype != 'object' and df[var2].dtype != 'object':
         with st.spinner('Working on it...'):
-            sns.set(style='ticks', font_scale=1.1, rc={'figure.figsize':(12, 6)})
+            sns.set_context("talk", rc={'axes.titlesize': 18, 'xtick.labelsize': 12,
+										 'ytick.labelsize': 12})
 
             sns.jointplot(df[var1], df[var2], kind="hex", color="#4CB391")
 
@@ -964,7 +992,7 @@ if page == pages[4]:
             icons='user',
             font_size=22,
             icon_legend=True,
-            figsize=(8, 6)
+            figsize=(9, 8)
         )
 
         if st.checkbox("Upsample minority class"):
@@ -1035,7 +1063,7 @@ if page == pages[4]:
             icons='user',
             font_size=22,
             icon_legend=True,
-            figsize=(8, 6)
+            figsize=(9, 8)
         )
 
         if st.checkbox("Let there be more data points!"):
@@ -1128,6 +1156,10 @@ if page == pages[4]:
 
             plt.style.use('seaborn-white')
             plt.figure(figsize = (4, 4))
+
+            plt.rcParams.update(
+                {'axes.labelpad': 15, 'axes.labelsize': 18, 'xtick.labelsize': 16, 'ytick.labelsize': 14,
+                 'legend.title_fontsize': 24, 'legend.loc': 'best'})
 
             v.plot.line(x='No. clusters', y='Silhouette width')
 
@@ -1487,9 +1519,15 @@ if page == pages[5]:
 
                 plt.style.use('seaborn-white')
 
+                plt.rcParams.update({'axes.labelpad': 15, 'axes.labelsize': 18,
+                                     'xtick.labelsize': 14, 'ytick.labelsize': 18,
+                                     'legend.loc': 'best', 'legend.fontsize': 18})
+
                 scores.plot.barh(figsize=(8, 6), fontsize=14)
 
-                plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=3, fontsize=12)
+                plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=3, fontsize=14)
+
+                plt.xlabel('Classification accuracy (%)')
 
                 plt.tight_layout()
 
@@ -1525,17 +1563,18 @@ if page == pages[5]:
             fig = plt.figure(figsize=(10, 8))
             fig.subplots_adjust(hspace=0.4, wspace=0.3)
 
-            #sns.set(font_scale = 1.5)
-            plt.style.use('seaborn-pastel')
-            sns.set_context("talk")
+            sns.set_context("talk",
+                            rc={'xtick.labelsize': 14,
+                                'ytick.labelsize': 14,
+                                'xtick.major.width': 0,
+                                'ytick.major.width': 0})
 
             for i, c in zip(range(1, 5), names):
                 ax = fig.add_subplot(2, 2, i)
                 sns.heatmap(cmatrix_dict[c], annot=True, ax=ax, annot_kws={"size": 14}, fmt='d', cbar=False,
                             vmin=0, vmax=950)
                 ax.set_title(c, fontsize=16)
-                ax.tick_params(axis='both', which='major', labelsize=14)
-                ax.tick_params(axis='both', which='both', length=0)
+
                 if i !=4 :
                     ax.set_xticklabels(['No Churn (predicted)', 'Churn (predicted)'])
                     ax.set_yticklabels(['No Churn (actual)', 'Churn (actual)'], va="center")
@@ -1582,7 +1621,11 @@ if page == pages[5]:
 
                 names = ['Original', 'Random', 'SMOTE', 'Clusters']
 
-                sns.set_context("talk")
+                sns.set_context("talk",
+                                rc={'xtick.labelsize':14,
+                                    'ytick.labelsize':14,
+                                    'xtick.major.width':0,
+                                    'ytick.major.width':0})
 
                 fig = plt.figure(figsize=(10, 8))
                 fig.subplots_adjust(hspace=0.4, wspace=0.4)
@@ -1595,8 +1638,7 @@ if page == pages[5]:
                                 cmap="YlGnBu", cbar=False, vmin=0, vmax=1)
 
                     ax.set_title(c, fontsize=16)
-                    ax.tick_params(axis='both', which='major', labelsize=14)
-                    ax.tick_params(axis='both', which='both', length=0)
+
 
                     if i == 4:
                         ax.set_yticklabels(['Group 1', 'Group2', 'Accuracy', 'Macro avg', 'Weighted avg'], va="center")
@@ -1722,9 +1764,12 @@ if page == pages[6]:
 
             imp_df = imp_df.sort_values(by='Mean')
 
-            plt.figure(figsize=(16, 14))
+            plt.style.use('seaborn-white')
 
-            sns.set(style="ticks", font_scale=2.3, rc={'legend.loc':'lower right'})
+            plt.rcParams.update(
+                {'axes.labelpad': 15, 'axes.labelsize': 18, 'xtick.labelsize': 14, 'ytick.labelsize': 18,
+                 'legend.title_fontsize': 24, 'legend.loc': 'best', 'legend.fontsize': 18,
+                 'figure.figsize': (10, 10)})
 
             imp_df.drop('Mean', axis=1).plot.barh()
 
@@ -1733,7 +1778,7 @@ if page == pages[6]:
 
             plt.tight_layout()
 
-            st.pyplot(width=900, height=2100)
+            st.pyplot()
 
             plt.clf()
 
@@ -1744,9 +1789,12 @@ if page == pages[6]:
             of customers who have purchased fiber optic internet.  
             '''
 
-            sns.set(style="ticks", font_scale=2.3, rc={'legend.loc':'lower right'})
+            plt.style.use('seaborn-white')
 
-            plt.figure(figsize=(16, 14))
+            plt.rcParams.update(
+                {'axes.labelpad': 15, 'axes.labelsize': 18, 'xtick.labelsize': 14, 'ytick.labelsize': 18,
+                 'legend.title_fontsize': 24, 'legend.loc': 'best', 'legend.fontsize': 18,
+                 'figure.figsize': (10, 10)})
 
             imp_dict['Clusters'].sort_values(by='Clusters').plot.barh()
 
@@ -1755,7 +1803,7 @@ if page == pages[6]:
 
             plt.tight_layout()
 
-            st.pyplot(width=900, height=900)
+            st.pyplot()
 
             plt.clf()
 

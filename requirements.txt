@@ -116,7 +116,7 @@ lxml==4.3.3
 Mako==1.0.12
 Markdown==3.1.1
 MarkupSafe==1.1.1
-matplotlib==3.0.3
+matplotlib==3.1.2
 mccabe==0.6.1
 mistune==0.8.4
 mizani==0.6.0
