@@ -1565,7 +1565,7 @@ if page == pages[5]:
 
             sns.set_context("talk",
                             rc={'xtick.labelsize': 14,
-                                'ytick.labelsize': 14,
+                                'ytick.labelsize': 11,
                                 'xtick.major.width': 0,
                                 'ytick.major.width': 0})
 
