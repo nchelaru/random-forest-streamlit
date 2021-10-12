@@ -131,7 +131,7 @@ npm==0.1.1
 nteract-on-jupyter==2.0.7
 numpy==1.16.2
 ocrspace==2.1.1
-opencv-python==4.1.1.26
+opencv-python==4.2.0.32
 optional-django==0.1.0
 packaging==19.0
 palettable==3.3.0
