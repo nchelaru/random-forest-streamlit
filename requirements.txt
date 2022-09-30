@@ -105,7 +105,7 @@ itsdangerous==1.1.0
 jedi==0.13.3
 Jinja2==2.10.1
 jmespath==0.9.4
-joblib==0.14.0
+joblib==1.2.0
 json5==0.8.5
 jsonschema==3.0.1
 kiwisolver==1.0.1
